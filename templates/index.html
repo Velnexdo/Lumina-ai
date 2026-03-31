@@ -196,6 +196,69 @@ animation:blink 1.4s infinite;
 50%{opacity:1;}
 100%{opacity:0.2;}
 }
+
+/* ================= MOBILE FIX (ADDED ONLY) ================= */
+@media (max-width: 768px) {
+
+body {
+    flex-direction: column;
+    height: 100vh;
+}
+
+.sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 8px;
+    gap: 6px;
+}
+
+.new-chat {
+    flex-shrink: 0;
+}
+
+.history {
+    display: none;
+}
+
+.main {
+    width: 100%;
+    height: 100%;
+}
+
+.chat-box {
+    padding: 10px;
+}
+
+.message {
+    max-width: 95%;
+    font-size: 14px;
+}
+
+.input-area {
+    position: sticky;
+    bottom: 0;
+    background: #343541;
+    padding: 8px;
+    gap: 5px;
+}
+
+input {
+    font-size: 16px;
+}
+
+button {
+    padding: 8px;
+    font-size: 14px;
+}
+
+#suggestions {
+    overflow-x: auto;
+    display: flex;
+    gap: 6px;
+    padding: 5px;
+}
+}
 </style>
 </head>
 
@@ -307,7 +370,6 @@ save();
 input.value="";
 document.getElementById("typing").style.display="block";
 
-// FETCH
 fetch("/chat", {
 method:"POST",
 headers:{"Content-Type":"application/json"},
@@ -329,7 +391,7 @@ handleBotReply("⚠ Server error!");
 });
 }
 
-// 🧠 FIXED BOT FLOW
+// BOT
 function handleBotReply(text){
 typeEffect(text);
 currentChat.push({text:text,sender:"bot"});
@@ -337,7 +399,7 @@ save();
 speak(text);
 }
 
-// 🖼 IMAGE FIXED (no overwrite issues)
+// IMAGE
 function generateImage(){
 let userPrompt = prompt("Enter image prompt:");
 if(!userPrompt) return;
@@ -347,7 +409,7 @@ let url = "https://image.pollinations.ai/prompt/" + encodeURIComponent(userPromp
 addMessage(`🖼 <b>${userPrompt}</b><br><img src="${url}">`,"bot");
 }
 
-// TYPE EFFECT FIXED
+// TYPE EFFECT
 function typeEffect(text){
 if(!text) text="...";
 
