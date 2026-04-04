@@ -50,9 +50,9 @@ def safe_eval(expr):
         node = ast.parse(expr, mode='eval').body
 
         def eval_node(n):
-            if isinstance(n, ast.Constant):  # ✅ FIXED (Python 3.11+)
+            if isinstance(n, ast.Constant):
                 return n.value
-            elif isinstance(n, ast.Num):  # fallback
+            elif isinstance(n, ast.Num):
                 return n.n
             elif isinstance(n, ast.BinOp):
                 return operators[type(n.op)](eval_node(n.left), eval_node(n.right))
@@ -62,6 +62,28 @@ def safe_eval(expr):
         return eval_node(node)
     except:
         return None
+
+# ================= GREETINGS ENGINE (NEW) =================
+def time_greeting():
+    hour = datetime.datetime.now().hour
+    if 5 <= hour < 12:
+        return "Good Morning 🌅"
+    elif 12 <= hour < 17:
+        return "Good Afternoon ☀️"
+    elif 17 <= hour < 21:
+        return "Good Evening 🌇"
+    else:
+        return "Good Night 🌙"
+
+def random_greeting():
+    return random.choice([
+        "Hey there 😄",
+        "Hello buddy 👋",
+        "Yo! What’s up 😎",
+        "Hi hi 👋",
+        "Aree welcome 😁",
+        "Namaste 🙏 (AI style 😄)"
+    ])
 
 # ================= EMOTION ENGINE =================
 def detect_emotion(msg):
@@ -79,6 +101,16 @@ def detect_emotion(msg):
 # ================= SMART AI =================
 def smart_reply(msg):
     msg = msg.lower()
+
+    # ===== GREETINGS (NEW) =====
+    if any(w in msg for w in ["hi", "hello", "hey", "yo"]):
+        return f"{time_greeting()} {random_greeting()} I am LuminaAI 🤖"
+
+    if "good morning" in msg:
+        return "Good Morning 🌅 Hope you have a great day!"
+
+    if "good night" in msg:
+        return "Good Night 🌙 Sleep well!"
 
     if "your name" in msg:
         return "I am LuminaAI Ultra 🤖 created by Velnexdo."
@@ -136,7 +168,6 @@ def home():
     except:
         return "LuminaAI running 🚀 (index.html missing)"
 
-# ✅ HEALTH CHECK (Render Important)
 @app.route("/health")
 def health():
     return "OK"
@@ -153,7 +184,7 @@ def chat():
 
         clean = msg.lower().strip()
 
-        with lock:  # ✅ thread safety
+        with lock:
 
             if memory["locked"]:
                 if clean.startswith("unlock "):
