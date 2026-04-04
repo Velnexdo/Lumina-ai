@@ -7,9 +7,12 @@ import datetime
 import ast
 import operator
 import os
+import threading
 
 app = Flask(__name__)
 CORS(app)
+
+lock = threading.Lock()
 
 # ================= MEMORY SYSTEM =================
 memory = {
@@ -47,7 +50,9 @@ def safe_eval(expr):
         node = ast.parse(expr, mode='eval').body
 
         def eval_node(n):
-            if isinstance(n, ast.Num):
+            if isinstance(n, ast.Constant):  # ✅ FIXED (Python 3.11+)
+                return n.value
+            elif isinstance(n, ast.Num):  # fallback
                 return n.n
             elif isinstance(n, ast.BinOp):
                 return operators[type(n.op)](eval_node(n.left), eval_node(n.right))
@@ -75,7 +80,6 @@ def detect_emotion(msg):
 def smart_reply(msg):
     msg = msg.lower()
 
-    # ✅ EXTRA FEATURES (ADDED)
     if "your name" in msg:
         return "I am LuminaAI Ultra 🤖 created by Velnexdo."
 
@@ -92,7 +96,6 @@ def smart_reply(msg):
             "😆 Programmer humor 😎"
         ])
 
-    # ORIGINAL
     if "who are you" in msg:
         return "I'm LuminaAI 🤖 — your smart assistant."
 
@@ -150,44 +153,41 @@ def chat():
 
         clean = msg.lower().strip()
 
-        # 🔐 LOCK SYSTEM
-        if memory["locked"]:
-            if clean.startswith("unlock "):
-                pin = clean.split("unlock ")[-1]
-                if pin == memory["pin"]:
-                    memory["locked"] = False
-                    return jsonify({"reply": "🔓 Unlocked!", "mood": "happy"})
-                return jsonify({"reply": "Wrong PIN ❌", "mood": "angry"})
-            return jsonify({"reply": "🔒 Locked system", "mood": "neutral"})
+        with lock:  # ✅ thread safety
 
-        if clean.startswith("set pin "):
-            memory["pin"] = clean.split("set pin ")[-1]
-            return jsonify({"reply": "PIN set 🔐", "mood": "happy"})
+            if memory["locked"]:
+                if clean.startswith("unlock "):
+                    pin = clean.split("unlock ")[-1]
+                    if pin == memory["pin"]:
+                        memory["locked"] = False
+                        return jsonify({"reply": "🔓 Unlocked!", "mood": "happy"})
+                    return jsonify({"reply": "Wrong PIN ❌", "mood": "angry"})
+                return jsonify({"reply": "🔒 Locked system", "mood": "neutral"})
 
-        if "lock system" in clean:
-            memory["locked"] = True
-            return jsonify({"reply": "System locked 🔒", "mood": "neutral"})
+            if clean.startswith("set pin "):
+                memory["pin"] = clean.split("set pin ")[-1]
+                return jsonify({"reply": "PIN set 🔐", "mood": "happy"})
 
-        # 📊 STATS
-        memory["stats"]["messages"] += 1
+            if "lock system" in clean:
+                memory["locked"] = True
+                return jsonify({"reply": "System locked 🔒", "mood": "neutral"})
 
-        # 🔁 REPEAT DETECTION
-        if msg == memory["last_message"]:
-            return jsonify({"reply": "You just said that 😏", "mood": "neutral"})
+            memory["stats"]["messages"] += 1
 
-        # HISTORY
-        memory["chat_history"].append(msg)
-        if len(memory["chat_history"]) > 50:
-            memory["chat_history"].pop(0)
+            if msg == memory["last_message"]:
+                return jsonify({"reply": "You just said that 😏", "mood": "neutral"})
 
-        memory["last_message"] = msg
+            memory["chat_history"].append(msg)
+            if len(memory["chat_history"]) > 50:
+                memory["chat_history"].pop(0)
+
+            memory["last_message"] = msg
 
         emotion = detect_emotion(msg)
         memory["mood"] = emotion
 
         now = datetime.datetime.now()
 
-        # AUTO LEARN
         if " is " in clean:
             parts = clean.split(" is ")
             if len(parts) == 2:
@@ -196,12 +196,10 @@ def chat():
         if clean in memory["learned"]:
             return jsonify({"reply": memory["learned"][clean], "mood": emotion})
 
-        # SMART
         smart = smart_reply(msg)
         if smart:
             return jsonify({"reply": smart, "mood": emotion})
 
-        # BASIC
         if "time" in clean:
             return jsonify({"reply": now.strftime("%H:%M:%S"), "mood": emotion})
 
@@ -211,7 +209,6 @@ def chat():
         if "fact" in clean:
             return jsonify({"reply": random_knowledge(), "mood": emotion})
 
-        # DEFAULT
         return jsonify({
             "reply": random.choice([
                 "Hmm interesting 🤔",
@@ -227,5 +224,5 @@ def chat():
 
 # ================= RUN =================
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))  # ✅ Render fix
+    port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
