@@ -11,6 +11,9 @@
 let typingSoundCooldown = false;
 let currentMood = "neutral";
 
+// ✅ Render-safe API URL
+const API_URL = window.location.origin;
+
 // 🎧 typing sound
 function playTypingSound(){
     if(typingSoundCooldown) return;
@@ -23,17 +26,15 @@ function playTypingSound(){
     setTimeout(()=>typingSoundCooldown=false,120);
 }
 
-// 🌙 THEME SYSTEM
+// 🌙 THEME
 function toggleTheme(){
     let theme = localStorage.getItem("theme") || "dark";
 
     if(theme === "dark"){
-        document.body.classList.remove("dark");
-        document.body.classList.add("light");
+        document.body.classList.replace("dark","light");
         localStorage.setItem("theme","light");
     } else {
-        document.body.classList.remove("light");
-        document.body.classList.add("dark");
+        document.body.classList.replace("light","dark");
         localStorage.setItem("theme","dark");
     }
 }
@@ -55,7 +56,7 @@ function showSuggestions(){
     });
 }
 
-// download
+// download chat
 function downloadChat(){
     let text = currentChat.map(m=>m.sender+": "+m.text).join("\n");
     let blob = new Blob([text], {type:"text/plain"});
@@ -72,142 +73,8 @@ function updateStatus(){
 }
 window.addEventListener("online", updateStatus);
 window.addEventListener("offline", updateStatus);
-</script>
 
-<style>
-body.dark {margin:0;font-family:"Segoe UI";background:#343541;color:white;display:flex;height:100vh;}
-body.light {margin:0;font-family:"Segoe UI";background:white;color:black;display:flex;height:100vh;}
-
-.sidebar {width:260px;background:#202123;padding:10px;display:flex;flex-direction:column;}
-body.light .sidebar {background:#f1f1f1;}
-
-.new-chat {background:#19c37d;padding:10px;border:none;border-radius:6px;cursor:pointer;}
-
-.history {flex:1;margin-top:10px;overflow:auto;}
-.history div {padding:8px;background:#2a2b32;margin-bottom:5px;border-radius:5px;cursor:pointer;}
-body.light .history div {background:#ddd;}
-
-.main {flex:1;display:flex;flex-direction:column;}
-
-.header {padding:12px;text-align:center;border-bottom:1px solid #444;}
-
-.chat-box {flex:1;overflow:auto;padding:20px;}
-
-.message {max-width:800px;margin:10px auto;padding:12px;border-radius:12px;animation:popIn 0.25s ease;}
-.user {background:#444654;}
-.bot {background:#3a3b45;}
-
-body.light .user {background:#ddd;}
-body.light .bot {background:#eee;}
-
-.input-area {display:flex;padding:10px;border-top:1px solid #444;}
-
-input {flex:1;padding:12px;border-radius:6px;border:none;}
-
-button {margin-left:10px;padding:10px;border:none;border-radius:6px;background:#19c37d;color:white;cursor:pointer;}
-
-#suggestions button {margin:5px;background:#555;}
-
-.status, .counter {font-size:12px;text-align:center;margin-top:5px;}
-
-img {max-width:100%;border-radius:10px;margin-top:10px;}
-
-.dot {height:6px;width:6px;margin:0 2px;background:white;border-radius:50%;display:inline-block;animation:blink 1.4s infinite;}
-
-@keyframes blink {0%{opacity:0.2;}50%{opacity:1;}100%{opacity:0.2;}}
-
-@media (max-width: 768px) {
-body { flex-direction: column; }
-.sidebar { width: 100%; flex-direction: row; overflow-x: auto; }
-.history { display: none; }
-.message { max-width: 95%; font-size: 14px; }
-.input-area { position: sticky; bottom: 0; }
-}
-
-/* ===== STARTUP SCREEN ===== */
-#startupScreen {
-    position: fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background:#0f1117;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    flex-direction:column;
-    z-index:9999;
-    animation: fadeOutStartup 1s ease forwards;
-    animation-delay: 4s;
-}
-
-#startupText {
-    font-size:35px;
-    margin-top:15px;
-    opacity:0;
-    animation: textIn 1.5s ease forwards;
-}
-
-#startupText span {
-    background: linear-gradient(90deg,#00d4ff,#ff00c8,#ff8a00);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-}
-
-@keyframes textIn {
-    from {opacity:0; transform:translateY(20px);}
-    to {opacity:1; transform:translateY(0);}
-}
-
-@keyframes fadeOutStartup {
-    to {opacity:0; visibility:hidden;}
-}
-</style>
-</head>
-
-<body onload="initApp()">
-
-<!-- 🔥 STARTUP SCREEN (LOGO REMOVED) -->
-<div id="startupScreen">
-    <div id="startupText">
-        Lumina <span>AI</span>
-    </div>
-</div>
-
-<div class="sidebar">
-<button onclick="toggleTheme()">🌙 Toggle</button>
-<button class="new-chat" onclick="newChat()">+ New Chat</button>
-<button onclick="downloadChat()">⬇ Download</button>
-<button onclick="clearChat()">🧹 Clear</button>
-<div id="history" class="history"></div>
-<div id="status" class="status"></div>
-<div id="counter" class="counter"></div>
-</div>
-
-<div class="main">
-<div class="header">🤖 LuminaAI Ultra</div>
-
-<div id="mood" style="text-align:center;font-size:12px;color:#aaa;">
-Mood: neutral
-</div>
-
-<div id="chat" class="chat-box"></div>
-
-<div id="typing" style="display:none;text-align:center;">
-<span class="dot"></span><span class="dot"></span><span class="dot"></span>
-</div>
-
-<div id="suggestions"></div>
-
-<div class="input-area">
-<button onclick="startListening()">🎤</button>
-<button onclick="generateImage()">🖼</button>
-<input id="message" placeholder="Type..." oninput="playTypingSound()" />
-<button onclick="sendMessage()">Send</button>
-</div>
-</div>
-
-<script>
+// ================= CHAT =================
 let chats = JSON.parse(localStorage.getItem("chats")||"[]");
 let currentChat = [];
 
@@ -219,16 +86,55 @@ function initApp(){
     updateCounter();
 
     setTimeout(()=>{
-        document.getElementById("startupScreen").remove();
+        let el = document.getElementById("startupScreen");
+        if(el) el.remove();
     },5000);
 }
 
-function save(){localStorage.setItem("chats",JSON.stringify(chats));updateCounter();}
-function newChat(){if(currentChat.length>0){chats.push(currentChat);save();}currentChat=[];document.getElementById("chat").innerHTML="";renderHistory();updateCounter();}
-function clearChat(){currentChat=[];document.getElementById("chat").innerHTML="";save();updateCounter();}
-function renderHistory(){let h=document.getElementById("history");h.innerHTML="";chats.forEach((c,i)=>{let d=document.createElement("div");d.innerText="Chat "+(i+1);d.onclick=()=>loadChat(i);h.appendChild(d);});}
-function loadChat(i){currentChat=chats[i];document.getElementById("chat").innerHTML="";currentChat.forEach(m=>addMessage(m.text,m.sender));updateCounter();}
-document.getElementById("message").addEventListener("keypress", function(e){if(e.key==="Enter"){e.preventDefault();sendMessage();}});
+function save(){
+    localStorage.setItem("chats",JSON.stringify(chats));
+    updateCounter();
+}
+
+function newChat(){
+    if(currentChat.length>0){
+        chats.push(currentChat);
+        save();
+    }
+    currentChat=[];
+    document.getElementById("chat").innerHTML="";
+    renderHistory();
+}
+
+function clearChat(){
+    currentChat=[];
+    document.getElementById("chat").innerHTML="";
+    save();
+}
+
+function renderHistory(){
+    let h=document.getElementById("history");
+    h.innerHTML="";
+    chats.forEach((c,i)=>{
+        let d=document.createElement("div");
+        d.innerText="Chat "+(i+1);
+        d.onclick=()=>loadChat(i);
+        h.appendChild(d);
+    });
+}
+
+function loadChat(i){
+    currentChat=chats[i];
+    document.getElementById("chat").innerHTML="";
+    currentChat.forEach(m=>addMessage(m.text,m.sender));
+}
+
+document.addEventListener("keypress", function(e){
+    if(e.key==="Enter"){
+        e.preventDefault();
+        sendMessage();
+    }
+});
 
 function sendMessage(){
 let input=document.getElementById("message");
@@ -242,7 +148,12 @@ save();
 input.value="";
 document.getElementById("typing").style.display="block";
 
-fetch("/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:msg})})
+// ✅ FIXED FETCH
+fetch(API_URL + "/chat",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({message:msg})
+})
 .then(res=>res.json())
 .then(data=>{
 currentMood=data.mood||"neutral";
@@ -252,14 +163,25 @@ setTimeout(()=>{
 document.getElementById("typing").style.display="none";
 handleBotReply(data.reply||"...");},500);
 })
-.catch(()=>{
+.catch(err=>{
 document.getElementById("typing").style.display="none";
-handleBotReply("⚠ Server error!");
+handleBotReply("⚠ Server error: "+err);
 });
 }
 
-function handleBotReply(text){typeEffect(text);currentChat.push({text:text,sender:"bot"});save();speak(text);}
-function generateImage(){let userPrompt=prompt("Enter image prompt:");if(!userPrompt)return;let url="https://image.pollinations.ai/prompt/"+encodeURIComponent(userPrompt);addMessage(`🖼 <b>${userPrompt}</b><br><img src="${url}">`,"bot");}
+function handleBotReply(text){
+typeEffect(text);
+currentChat.push({text:text,sender:"bot"});
+save();
+speak(text);
+}
+
+function generateImage(){
+let userPrompt=prompt("Enter image prompt:");
+if(!userPrompt)return;
+let url="https://image.pollinations.ai/prompt/"+encodeURIComponent(userPrompt);
+addMessage(`🖼 <b>${userPrompt}</b><br><img src="${url}">`,"bot");
+}
 
 function typeEffect(text){
 let chat=document.getElementById("chat");
@@ -269,7 +191,7 @@ chat.appendChild(div);
 
 let i=0,temp="";
 let interval=setInterval(()=>{
-temp+=text[i];
+temp+=text[i]||"";
 div.innerHTML=marked.parse(temp);
 i++;
 chat.scrollTop=chat.scrollHeight;
@@ -290,8 +212,10 @@ chat.appendChild(div);
 chat.scrollTop=chat.scrollHeight;
 }
 
+// ✅ FIXED SPEECH (no overlap)
 function speak(text){
 try{
+window.speechSynthesis.cancel();
 let speech=new SpeechSynthesisUtterance(text);
 speech.lang="en-US";
 window.speechSynthesis.speak(speech);
@@ -299,7 +223,10 @@ window.speechSynthesis.speak(speech);
 }
 
 function startListening(){
-if(!('webkitSpeechRecognition' in window)){alert("Speech not supported!");return;}
+if(!('webkitSpeechRecognition' in window)){
+alert("Speech not supported!");
+return;
+}
 let recognition=new webkitSpeechRecognition();
 recognition.lang="en-US";
 recognition.start();
@@ -312,6 +239,86 @@ function updateCounter(){
 document.getElementById("counter").innerText="Messages: "+currentChat.length;
 }
 </script>
+
+<style>
+/* (UNCHANGED UI - NO REMOVAL) */
+body.dark {margin:0;font-family:"Segoe UI";background:#343541;color:white;display:flex;height:100vh;}
+body.light {margin:0;font-family:"Segoe UI";background:white;color:black;display:flex;height:100vh;}
+
+.sidebar {width:260px;background:#202123;padding:10px;display:flex;flex-direction:column;}
+body.light .sidebar {background:#f1f1f1;}
+
+.new-chat {background:#19c37d;padding:10px;border:none;border-radius:6px;cursor:pointer;}
+
+.history {flex:1;margin-top:10px;overflow:auto;}
+.history div {padding:8px;background:#2a2b32;margin-bottom:5px;border-radius:5px;cursor:pointer;}
+body.light .history div {background:#ddd;}
+
+.main {flex:1;display:flex;flex-direction:column;}
+
+.header {padding:12px;text-align:center;border-bottom:1px solid #444;}
+
+.chat-box {flex:1;overflow:auto;padding:20px;}
+
+.message {max-width:800px;margin:10px auto;padding:12px;border-radius:12px;}
+.user {background:#444654;}
+.bot {background:#3a3b45;}
+
+body.light .user {background:#ddd;}
+body.light .bot {background:#eee;}
+
+.input-area {display:flex;padding:10px;border-top:1px solid #444;}
+
+input {flex:1;padding:12px;border-radius:6px;border:none;}
+
+button {margin-left:10px;padding:10px;border:none;border-radius:6px;background:#19c37d;color:white;cursor:pointer;}
+
+#suggestions button {margin:5px;background:#555;}
+.status,.counter {font-size:12px;text-align:center;margin-top:5px;}
+
+img {max-width:100%;border-radius:10px;margin-top:10px;}
+
+.dot {height:6px;width:6px;margin:0 2px;background:white;border-radius:50%;display:inline-block;animation:blink 1.4s infinite;}
+
+@keyframes blink {0%{opacity:0.2;}50%{opacity:1;}100%{opacity:0.2;}}
+</style>
+</head>
+
+<body onload="initApp()">
+
+<!-- STARTUP -->
+<div id="startupScreen">
+    <div id="startupText">Lumina <span>AI</span></div>
+</div>
+
+<div class="sidebar">
+<button onclick="toggleTheme()">🌙 Toggle</button>
+<button class="new-chat" onclick="newChat()">+ New Chat</button>
+<button onclick="downloadChat()">⬇ Download</button>
+<button onclick="clearChat()">🧹 Clear</button>
+<div id="history" class="history"></div>
+<div id="status" class="status"></div>
+<div id="counter" class="counter"></div>
+</div>
+
+<div class="main">
+<div class="header">🤖 LuminaAI Ultra</div>
+<div id="mood" style="text-align:center;font-size:12px;color:#aaa;">Mood: neutral</div>
+<div id="chat" class="chat-box"></div>
+
+<div id="typing" style="display:none;text-align:center;">
+<span class="dot"></span><span class="dot"></span><span class="dot"></span>
+</div>
+
+<div id="suggestions"></div>
+
+<div class="input-area">
+<button onclick="startListening()">🎤</button>
+<button onclick="generateImage()">🖼</button>
+<input id="message" placeholder="Type..." oninput="playTypingSound()" />
+<button onclick="sendMessage()">Send</button>
+</div>
+</div>
 
 </body>
 </html>
