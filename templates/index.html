@@ -7,6 +7,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
+<!-- ✅ RAZORPAY ADDED -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
 <script>
 let typingSoundCooldown = false;
 let currentMood = "neutral";
@@ -24,6 +27,26 @@ function playTypingSound(){
     audio.play().catch(()=>{});
 
     setTimeout(()=>typingSoundCooldown=false,120);
+}
+
+// ================= RAZORPAY FUNCTION =================
+function startPayment(){
+    var options = {
+        "key": "rzp_live_SfMTVjtUvKYFIM", // 🔴 PUT YOUR KEY HERE
+        "amount": 9900,
+        "currency": "INR",
+        "name": "LuminaAI Ultra",
+        "description": "Purchase",
+        "handler": function (response){
+            alert("✅ Payment Successful!\nID: " + response.razorpay_payment_id);
+        },
+        "theme": {
+            "color": "#19c37d"
+        }
+    };
+
+    var rzp = new Razorpay(options);
+    rzp.open();
 }
 
 // 🌙 THEME
@@ -148,7 +171,6 @@ save();
 input.value="";
 document.getElementById("typing").style.display="block";
 
-// ✅ FIXED FETCH
 fetch(API_URL + "/chat",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
@@ -212,7 +234,6 @@ chat.appendChild(div);
 chat.scrollTop=chat.scrollHeight;
 }
 
-// ✅ FIXED SPEECH (no overlap)
 function speak(text){
 try{
 window.speechSynthesis.cancel();
@@ -241,7 +262,7 @@ document.getElementById("counter").innerText="Messages: "+currentChat.length;
 </script>
 
 <style>
-/* (UNCHANGED UI - NO REMOVAL) */
+/* SAME UI */
 body.dark {margin:0;font-family:"Segoe UI";background:#343541;color:white;display:flex;height:100vh;}
 body.light {margin:0;font-family:"Segoe UI";background:white;color:black;display:flex;height:100vh;}
 
@@ -286,7 +307,6 @@ img {max-width:100%;border-radius:10px;margin-top:10px;}
 
 <body onload="initApp()">
 
-<!-- STARTUP -->
 <div id="startupScreen">
     <div id="startupText">Lumina <span>AI</span></div>
 </div>
@@ -315,6 +335,7 @@ img {max-width:100%;border-radius:10px;margin-top:10px;}
 <div class="input-area">
 <button onclick="startListening()">🎤</button>
 <button onclick="generateImage()">🖼</button>
+<button onclick="startPayment()">➕</button> <!-- ✅ ADDED -->
 <input id="message" placeholder="Type..." oninput="playTypingSound()" />
 <button onclick="sendMessage()">Send</button>
 </div>
