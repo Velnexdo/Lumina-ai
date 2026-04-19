@@ -1,15 +1,16 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-import random
-import re
-import time
-import datetime
-import ast
-import operator
-import os
-import threading
+import random, re, time, datetime, ast, operator, os, threading
+from zoneinfo import ZoneInfo
 
-app = Flask(__name__)
+# ✅ SAFE RAZORPAY IMPORT
+try:
+    import razorpay
+    RZP_ENABLED = True
+except:
+    RZP_ENABLED = False
+
+app = Flask(__name__, template_folder="templates", static_folder="static")
 CORS(app)
 
 lock = threading.Lock()
@@ -21,8 +22,6 @@ memory = {
     "mode": "normal",
     "last_message": "",
     "chat_history": [],
-
-    # ✅ ADDED
     "learned": {},
     "pin": None,
     "locked": False,
@@ -32,12 +31,9 @@ memory = {
 
 todos = []
 notes = []
-goals = []
-reminders = []
-
 start_time = time.time()
 
-# ================= SAFE MATH ENGINE =================
+# ================= SAFE MATH =================
 operators = {
     ast.Add: operator.add,
     ast.Sub: operator.sub,
@@ -52,206 +48,195 @@ def safe_eval(expr):
         def eval_node(n):
             if isinstance(n, ast.Constant):
                 return n.value
-            elif isinstance(n, ast.Num):
-                return n.n
             elif isinstance(n, ast.BinOp):
                 return operators[type(n.op)](eval_node(n.left), eval_node(n.right))
             else:
-                raise Exception("Invalid Expression")
+                raise Exception("Invalid")
 
         return eval_node(node)
     except:
         return None
 
-# ================= GREETINGS ENGINE (NEW) =================
+# ================= GREETING =================
 def time_greeting():
     hour = datetime.datetime.now().hour
-    if 5 <= hour < 12:
-        return "Good Morning 🌅"
-    elif 12 <= hour < 17:
-        return "Good Afternoon ☀️"
-    elif 17 <= hour < 21:
-        return "Good Evening 🌇"
-    else:
-        return "Good Night 🌙"
+    if 5 <= hour < 12: return "Good Morning 🌅"
+    elif 12 <= hour < 17: return "Good Afternoon ☀️"
+    elif 17 <= hour < 21: return "Good Evening 🌇"
+    else: return "Good Night 🌙"
 
 def random_greeting():
-    return random.choice([
-        "Hey there 😄",
-        "Hello buddy 👋",
-        "Yo! What’s up 😎",
-        "Hi hi 👋",
-        "Aree welcome 😁",
-        "Namaste 🙏 (AI style 😄)"
-    ])
+    return random.choice(["Hey 😄","Hello 👋","Yo 😎","Hi 👋","Welcome 😁","Namaste 🙏"])
 
-# ================= EMOTION ENGINE =================
+# ================= EMOTION =================
 def detect_emotion(msg):
     msg = msg.lower()
-    if any(w in msg for w in ["sad", "cry", "bad", "upset", "depressed"]):
-        return "sad"
-    if any(w in msg for w in ["happy", "good", "awesome", "love", "great"]):
-        return "happy"
-    if any(w in msg for w in ["angry", "mad", "hate", "annoyed"]):
-        return "angry"
-    if any(w in msg for w in ["bored", "nothing to do"]):
-        return "bored"
+    if any(w in msg for w in ["sad","cry","bad","upset"]): return "sad"
+    if any(w in msg for w in ["happy","good","love"]): return "happy"
+    if any(w in msg for w in ["angry","mad"]): return "angry"
+    if "bored" in msg: return "bored"
     return "neutral"
+
+# ================= COUNTRY TIME =================
+def get_country_time(msg):
+    msg = msg.lower()
+
+    timezones = {
+        "india": "Asia/Kolkata",
+        "uk": "Europe/London",
+        "london": "Europe/London",
+        "usa": "America/New_York",
+        "new york": "America/New_York",
+        "california": "America/Los_Angeles",
+        "japan": "Asia/Tokyo",
+        "china": "Asia/Shanghai",
+        "dubai": "Asia/Dubai",
+        "pakistan": "Asia/Karachi",
+        "australia": "Australia/Sydney"
+    }
+
+    for country, zone in timezones.items():
+        if country in msg:
+            now = datetime.datetime.now(ZoneInfo(zone))
+            return f"🕒 Time in {country.title()}: {now.strftime('%H:%M:%S')}"
+
+    return None
 
 # ================= SMART AI =================
 def smart_reply(msg):
-    msg = msg.lower()
+    msg_lower = msg.lower()
 
-    # ===== GREETINGS (NEW) =====
-    if any(w in msg for w in ["hi", "hello", "hey", "yo"]):
+    if re.fullmatch(r"(hi|hello|hey|yo)+", msg_lower):
         return f"{time_greeting()} {random_greeting()} I am LuminaAI 🤖"
 
-    if "good morning" in msg:
-        return "Good Morning 🌅 Hope you have a great day!"
-
-    if "good night" in msg:
-        return "Good Night 🌙 Sleep well!"
-
-    if "your name" in msg:
+    if "your name" in msg_lower:
         return "I am LuminaAI Ultra 🤖 created by Velnexdo."
 
-    if "explain ai simply" in msg:
-        return "AI is a smart system that learns, thinks, and makes decisions like humans."
+    if "motivate" in msg_lower:
+        return "Discipline beats motivation 💪"
 
-    if "motivate me" in msg:
-        return "Stay consistent. Small progress daily = big success 🚀"
-
-    if "joke" in msg:
+    if "joke" in msg_lower:
         return random.choice([
             "😂 Debugging = fixing 1 bug, adding 10",
             "🤣 Code works… don't touch it!",
             "😆 Programmer humor 😎"
         ])
 
-    if "who are you" in msg:
-        return "I'm LuminaAI 🤖 — your smart assistant."
+    if "how are you" in msg_lower:
+        return "Running perfectly 🚀"
 
-    if "how are you" in msg:
-        return "I'm doing awesome 😄"
-
-    if "what can you do" in msg:
-        return "Chat, memory, tasks, math, ideas 😎"
-
-    if "why" in msg:
-        return "Depends on context 🤔"
-
-    if "how" in msg:
-        return "Step-by-step ⚙️"
-
-    if "what is ai" in msg:
-        return "AI = human-like intelligence in machines 🤖"
-
-    if "who made you" in msg:
-        return "Made by Velnexdo 🔥"
+    if "what can you do" in msg_lower:
+        return "Chat 💬 Memory 🧠 Tasks 📋 Math ➗ AI 🤖"
 
     return None
 
-# ================= RANDOM KNOWLEDGE =================
-def random_knowledge():
-    return random.choice([
-        "💡 Brain uses less power than a bulb!",
-        "🌍 Earth supports life",
-        "⚡ Light is faster than sound",
-        "🧠 Brain beats computers sometimes"
-    ])
+# ================= COMMAND =================
+def handle_commands(msg):
+    msg_lower = msg.lower()
 
-# ================= HOME =================
+    if msg_lower == "/help":
+        return "Commands: /help /stats /todo /notes /clear"
+
+    if msg_lower == "/stats":
+        uptime = int(time.time() - start_time)
+        return f"Messages: {memory['stats']['messages']} | Uptime: {uptime}s"
+
+    return None
+
+# ================= RAZORPAY =================
+if RZP_ENABLED:
+    KEY_ID = "rzp_live_SfMTVjtUvKYFIM"
+    KEY_SECRET = "kXIHudBLnA81YTelY7Tt3Hkx"
+    razorpay_client = razorpay.Client(auth=(KEY_ID, KEY_SECRET))
+
+@app.route("/create-order", methods=["POST"])
+def create_order():
+    if not RZP_ENABLED:
+        return jsonify({"error": "Razorpay not installed"}), 500
+
+    data = request.get_json() or {}
+    amount = data.get("amount", 100)
+
+    order = razorpay_client.order.create({
+        "amount": int(amount) * 100,
+        "currency": "INR",
+        "payment_capture": 1
+    })
+
+    return jsonify(order)
+
+@app.route("/verify-payment", methods=["POST"])
+def verify_payment():
+    if not RZP_ENABLED:
+        return jsonify({"error": "Razorpay not installed"}), 500
+
+    data = request.get_json() or {}
+
+    params = {
+        "razorpay_order_id": data.get("order_id"),
+        "razorpay_payment_id": data.get("payment_id"),
+        "razorpay_signature": data.get("signature")
+    }
+
+    try:
+        razorpay_client.utility.verify_payment_signature(params)
+        return jsonify({"success": True})
+    except:
+        return jsonify({"success": False})
+
+# ================= ROUTES =================
 @app.route("/")
 def home():
-    try:
-        return render_template("index.html")
-    except:
-        return "LuminaAI running 🚀 (index.html missing)"
+    return render_template("index.html")
 
-@app.route("/health")
-def health():
-    return "OK"
-
-# ================= CHAT =================
 @app.route("/chat", methods=["POST"])
 def chat():
     try:
         data = request.get_json(silent=True) or {}
-        msg = data.get("message", "")
+        msg = data.get("message","").strip()
 
         if not msg:
-            return jsonify({"reply": "Empty message 😅", "mood": "neutral"})
+            return jsonify({"reply":"Empty message 😅"})
 
-        clean = msg.lower().strip()
+        clean = msg.lower()
 
         with lock:
-
-            if memory["locked"]:
-                if clean.startswith("unlock "):
-                    pin = clean.split("unlock ")[-1]
-                    if pin == memory["pin"]:
-                        memory["locked"] = False
-                        return jsonify({"reply": "🔓 Unlocked!", "mood": "happy"})
-                    return jsonify({"reply": "Wrong PIN ❌", "mood": "angry"})
-                return jsonify({"reply": "🔒 Locked system", "mood": "neutral"})
-
-            if clean.startswith("set pin "):
-                memory["pin"] = clean.split("set pin ")[-1]
-                return jsonify({"reply": "PIN set 🔐", "mood": "happy"})
-
-            if "lock system" in clean:
-                memory["locked"] = True
-                return jsonify({"reply": "System locked 🔒", "mood": "neutral"})
-
             memory["stats"]["messages"] += 1
 
-            if msg == memory["last_message"]:
-                return jsonify({"reply": "You just said that 😏", "mood": "neutral"})
+            if clean == memory["last_message"]:
+                return jsonify({"reply":"You just said that 😏"})
 
-            memory["chat_history"].append(msg)
-            if len(memory["chat_history"]) > 50:
-                memory["chat_history"].pop(0)
+            memory["last_message"] = clean
 
-            memory["last_message"] = msg
+        cmd = handle_commands(msg)
+        if cmd:
+            return jsonify({"reply":cmd})
 
         emotion = detect_emotion(msg)
-        memory["mood"] = emotion
 
-        now = datetime.datetime.now()
+        # ✅ COUNTRY TIME
+        ct = get_country_time(clean)
+        if ct:
+            return jsonify({"reply": ct, "mood": emotion})
 
-        if " is " in clean:
-            parts = clean.split(" is ")
-            if len(parts) == 2:
-                memory["learned"][parts[0].strip()] = parts[1].strip()
+        if "time" in clean:
+            return jsonify({"reply": datetime.datetime.now().strftime("%H:%M:%S")})
 
-        if clean in memory["learned"]:
-            return jsonify({"reply": memory["learned"][clean], "mood": emotion})
+        math_result = safe_eval(clean)
+        if math_result is not None:
+            return jsonify({"reply": f"Answer: {math_result}"})
 
         smart = smart_reply(msg)
         if smart:
-            return jsonify({"reply": smart, "mood": emotion})
+            return jsonify({"reply": smart})
 
-        if "time" in clean:
-            return jsonify({"reply": now.strftime("%H:%M:%S"), "mood": emotion})
-
-        if "date" in clean:
-            return jsonify({"reply": now.strftime("%Y-%m-%d"), "mood": emotion})
-
-        if "fact" in clean:
-            return jsonify({"reply": random_knowledge(), "mood": emotion})
-
-        return jsonify({
-            "reply": random.choice([
-                "Hmm interesting 🤔",
-                "Tell me more 😏",
-                "Sounds cool 😎"
-            ]),
-            "mood": emotion
-        })
+        return jsonify({"reply": random.choice([
+            "Hmm 🤔","Interesting 👀","Tell me more 😄"
+        ])})
 
     except Exception as e:
-        print("🔥 ERROR:", e)
-        return jsonify({"reply": "Server error ⚠️"}), 500
+        print("ERROR:", e)
+        return jsonify({"reply":"Server error ⚠️"}), 500
 
 # ================= RUN =================
 if __name__ == "__main__":
