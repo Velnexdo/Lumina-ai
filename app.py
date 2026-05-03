@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-import time, ast, operator, requests, os
+import os, requests, ast, operator
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 CORS(app)
@@ -39,7 +39,7 @@ def safe_eval(expr):
 def ask_ai(msg):
 
     if not OPENROUTER_API_KEY:
-        return "⚠️ API key missing. Add OPENROUTER_API_KEY in Render environment variables."
+        return "⚠️ Missing API key in Render Environment Variables"
 
     for model in MODELS:
         try:
@@ -48,7 +48,7 @@ def ask_ai(msg):
                 headers={
                     "Authorization": f"Bearer {OPENROUTER_API_KEY}",
                     "Content-Type": "application/json",
-                    "HTTP-Referer": "http://localhost",
+                    "HTTP-Referer": "https://render.com",
                     "X-Title": "LuminaAI"
                 },
                 json={
@@ -56,20 +56,17 @@ def ask_ai(msg):
                     "messages": [
                         {
                             "role": "system",
-                            "content": "You are LuminaAI. You are smart, friendly, and very helpful. Give clear and natural answers."
+                            "content": "You are a smart, friendly AI assistant. Give clear answers."
                         },
                         {"role": "user", "content": msg}
                     ],
-                    "max_tokens": 800,
+                    "max_tokens": 700,
                     "temperature": 0.7
                 },
                 timeout=20
             )
 
-            print("MODEL:", model, "STATUS:", res.status_code)
-
             if res.status_code != 200:
-                print("ERROR:", res.text)
                 continue
 
             data = res.json()
@@ -77,11 +74,10 @@ def ask_ai(msg):
             if data.get("choices"):
                 return data["choices"][0]["message"]["content"]
 
-        except Exception as e:
-            print("AI ERROR:", e)
+        except:
             continue
 
-    return "⚠️ AI failed (try again later)"
+    return "⚠️ AI temporarily unavailable"
 
 # ================= ROUTES =================
 @app.route("/")
@@ -91,8 +87,7 @@ def home():
 @app.route("/chat", methods=["POST"])
 def chat():
     try:
-        data = request.get_json() or {}
-        msg = data.get("message", "").strip()
+        msg = (request.json or {}).get("message", "").strip()
 
         if not msg:
             return jsonify({"reply": "Say something 😄"})
@@ -102,14 +97,14 @@ def chat():
         if math is not None:
             return jsonify({"reply": f"Answer: {math}"})
 
-        # AI response
+        # AI reply
         reply = ask_ai(msg)
 
         return jsonify({"reply": reply})
 
     except Exception as e:
-        print("SERVER ERROR:", e)
-        return jsonify({"reply": "Error ⚠️"}), 500
+        print("ERROR:", e)
+        return jsonify({"reply": "Server error ⚠️"}), 500
 
 # ================= RUN =================
 if __name__ == "__main__":
