@@ -1,17 +1,13 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-import time, ast, operator, threading, requests, os
+import time, ast, operator, requests, os
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 CORS(app)
 
-lock = threading.Lock()
-
 # ================= CONFIG =================
-# ✅ Correct: env variable name use karo
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
-# 🔥 Multiple models (fallback)
 MODELS = [
     "mistralai/mistral-7b-instruct",
     "meta-llama/llama-3-8b-instruct"
@@ -39,10 +35,11 @@ def safe_eval(expr):
     except:
         return None
 
-# ================= AI =================
+# ================= AI CORE =================
 def ask_ai(msg):
+
     if not OPENROUTER_API_KEY:
-        return "⚠️ API key missing. Set OPENROUTER_API_KEY"
+        return "⚠️ API key missing. Add OPENROUTER_API_KEY in Render environment variables."
 
     for model in MODELS:
         try:
@@ -59,7 +56,7 @@ def ask_ai(msg):
                     "messages": [
                         {
                             "role": "system",
-                            "content": "You are LuminaAI, a smart, friendly, human-like assistant. Give clear and helpful answers."
+                            "content": "You are LuminaAI. You are smart, friendly, and very helpful. Give clear and natural answers."
                         },
                         {"role": "user", "content": msg}
                     ],
@@ -77,14 +74,14 @@ def ask_ai(msg):
 
             data = res.json()
 
-            if "choices" in data and len(data["choices"]) > 0:
+            if data.get("choices"):
                 return data["choices"][0]["message"]["content"]
 
         except Exception as e:
             print("AI ERROR:", e)
             continue
 
-    return "⚠️ AI failed (check API key / quota)"
+    return "⚠️ AI failed (try again later)"
 
 # ================= ROUTES =================
 @app.route("/")
@@ -100,12 +97,12 @@ def chat():
         if not msg:
             return jsonify({"reply": "Say something 😄"})
 
-        # Optional math
+        # math support
         math = safe_eval(msg)
         if math is not None:
             return jsonify({"reply": f"Answer: {math}"})
 
-        # 🔥 PURE AI
+        # AI response
         reply = ask_ai(msg)
 
         return jsonify({"reply": reply})
