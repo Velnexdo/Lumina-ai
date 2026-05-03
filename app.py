@@ -8,6 +8,8 @@ CORS(app)
 # ================= CONFIG =================
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
+AI_NAME = "LuminaAI"
+
 MODELS = [
     "mistralai/mistral-7b-instruct",
     "meta-llama/llama-3-8b-instruct"
@@ -29,7 +31,10 @@ def safe_eval(expr):
             if isinstance(n, ast.Constant):
                 return n.value
             elif isinstance(n, ast.BinOp):
-                return operators[type(n.op)](eval_node(n.left), eval_node(n.right))
+                return operators[type(n.op)](
+                    eval_node(n.left),
+                    eval_node(n.right)
+                )
 
         return eval_node(node)
     except:
@@ -49,19 +54,31 @@ def ask_ai(msg):
                     "Authorization": f"Bearer {OPENROUTER_API_KEY}",
                     "Content-Type": "application/json",
                     "HTTP-Referer": "https://render.com",
-                    "X-Title": "LuminaAI"
+                    "X-Title": AI_NAME
                 },
                 json={
                     "model": model,
                     "messages": [
                         {
                             "role": "system",
-                            "content": "You are a smart, friendly AI assistant. Give clear answers."
+                            "content": f"""
+You are Lumina AI, a friendly AI assistant and a helpful AI friend.
+
+Personality:
+- You are like a smart best friend
+- You talk in simple, natural human language
+- You are helpful, fun, and supportive
+- You know your name is {AI_NAME} and you can say it naturally in conversation
+- You NEVER say you're just a model unless asked
+- You behave like a real chat companion
+
+Always respond naturally like a friend talking.
+"""
                         },
                         {"role": "user", "content": msg}
                     ],
                     "max_tokens": 700,
-                    "temperature": 0.7
+                    "temperature": 0.8
                 },
                 timeout=20
             )
@@ -90,14 +107,14 @@ def chat():
         msg = (request.json or {}).get("message", "").strip()
 
         if not msg:
-            return jsonify({"reply": "Say something 😄"})
+            return jsonify({"reply": "Hey 😄 kya soch rahe ho?"})
 
-        # math support
+        # simple math support
         math = safe_eval(msg)
         if math is not None:
             return jsonify({"reply": f"Answer: {math}"})
 
-        # AI reply
+        # AI response
         reply = ask_ai(msg)
 
         return jsonify({"reply": reply})
