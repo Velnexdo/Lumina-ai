@@ -6,117 +6,91 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-<!-- ✅ RAZORPAY ADDED -->
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <script>
 let typingSoundCooldown = false;
 let currentMood = "neutral";
-
-// ✅ Render-safe API URL
 const API_URL = window.location.origin;
 
-// 🎧 typing sound
-function playTypingSound(){
-    if(typingSoundCooldown) return;
-    typingSoundCooldown = true;
-
-    let audio = new Audio("https://www.soundjay.com/button/sounds/button-16.mp3");
-    audio.volume = 0.1;
-    audio.play().catch(()=>{});
-
-    setTimeout(()=>typingSoundCooldown=false,120);
+// ================= PLAN SYSTEM =================
+function openPlans(){
+    document.getElementById("planModal").style.display = "block";
+    showPlanType("personal");
 }
 
-// ================= RAZORPAY FUNCTION =================
-function startPayment(){
-    var options = {
-        "key": "rzp_live_SfMTVjtUvKYFIM", // 🔴 PUT YOUR KEY HERE
-        "amount": 9900,
-        "currency": "INR",
-        "name": "LuminaAI Ultra",
-        "description": "Purchase",
-        "handler": function (response){
-            alert("✅ Payment Successful!\nID: " + response.razorpay_payment_id);
-        },
-        "theme": {
-            "color": "#19c37d"
-        }
-    };
-
-    var rzp = new Razorpay(options);
-    rzp.open();
+function closePlans(){
+    document.getElementById("planModal").style.display = "none";
 }
 
-// 🌙 THEME
-function toggleTheme(){
-    let theme = localStorage.getItem("theme") || "dark";
+function showPlanType(type){
+    let container = document.getElementById("plansContainer");
+    container.innerHTML = "";
 
-    if(theme === "dark"){
-        document.body.classList.replace("dark","light");
-        localStorage.setItem("theme","light");
+    let plans = [];
+
+    if(type === "personal"){
+        plans = [
+            {name:"Starter", price:99, features:["Basic AI","Limited chats","Normal speed"]},
+            {name:"Pro (Popular)", price:299, features:["Faster replies","Better AI","More usage"]},
+            {name:"Ultra", price:599, features:["Unlimited chats","Best AI","Priority speed"]}
+        ];
     } else {
-        document.body.classList.replace("light","dark");
-        localStorage.setItem("theme","dark");
+        plans = [
+            {name:"Business Basic", price:999, features:["Team access","API access","Priority support"]},
+            {name:"Business Pro", price:1999, features:["High limits","Faster AI","Advanced tools"]}
+        ];
     }
-}
 
-function loadTheme(){
-    let theme = localStorage.getItem("theme") || "dark";
-    document.body.classList.add(theme);
-}
+    plans.forEach(p=>{
+        let div = document.createElement("div");
+        div.className = "plan-card";
 
-// suggestions
-function showSuggestions(){
-    let box = document.getElementById("suggestions");
-    box.innerHTML="";
-    ["Hi","Tell me a joke","What is time","Your name?","Explain AI simply","Motivate me"].forEach(s=>{
-        let b=document.createElement("button");
-        b.innerText=s;
-        b.onclick=()=>{document.getElementById("message").value=s;};
-        box.appendChild(b);
+        div.innerHTML = `
+            <h3>${p.name} - ₹${p.price}</h3>
+            <ul>${p.features.map(f=>"<li>"+f+"</li>").join("")}</ul>
+            <button onclick="pay(${p.price})">Buy Now</button>
+        `;
+
+        container.appendChild(div);
     });
 }
 
-// download chat
-function downloadChat(){
-    let text = currentChat.map(m=>m.sender+": "+m.text).join("\n");
-    let blob = new Blob([text], {type:"text/plain"});
-    let a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download="chat.txt";
-    a.click();
+function pay(amount){
+    var options = {
+        "key": "rzp_live_SfMTVjtUvKYFIM",
+        "amount": amount * 100,
+        "currency": "INR",
+        "name": "LuminaAI Ultra",
+        "description": "Plan Purchase",
+        "handler": function (response){
+            alert("✅ Payment Successful! ID: " + response.razorpay_payment_id);
+        }
+    };
+
+    new Razorpay(options).open();
 }
 
-// status
-function updateStatus(){
-    let s=document.getElementById("status");
-    s.innerText = navigator.onLine ? "🟢 Online | Mood: " + currentMood : "🔴 Offline";
+// ================= SOUND =================
+function playTypingSound(){
+    if(typingSoundCooldown) return;
+    typingSoundCooldown = true;
+    let audio = new Audio("https://www.soundjay.com/button/sounds/button-16.mp3");
+    audio.volume = 0.1;
+    audio.play().catch(()=>{});
+    setTimeout(()=>typingSoundCooldown=false,120);
 }
-window.addEventListener("online", updateStatus);
-window.addEventListener("offline", updateStatus);
 
 // ================= CHAT =================
 let chats = JSON.parse(localStorage.getItem("chats")||"[]");
 let currentChat = [];
 
 function initApp(){
-    loadTheme();
-    showSuggestions();
-    updateStatus();
     renderHistory();
-    updateCounter();
-
-    setTimeout(()=>{
-        let el = document.getElementById("startupScreen");
-        if(el) el.remove();
-    },5000);
 }
 
 function save(){
     localStorage.setItem("chats",JSON.stringify(chats));
-    updateCounter();
 }
 
 function newChat(){
@@ -127,12 +101,6 @@ function newChat(){
     currentChat=[];
     document.getElementById("chat").innerHTML="";
     renderHistory();
-}
-
-function clearChat(){
-    currentChat=[];
-    document.getElementById("chat").innerHTML="";
-    save();
 }
 
 function renderHistory(){
@@ -152,13 +120,6 @@ function loadChat(i){
     currentChat.forEach(m=>addMessage(m.text,m.sender));
 }
 
-document.addEventListener("keypress", function(e){
-    if(e.key==="Enter"){
-        e.preventDefault();
-        sendMessage();
-    }
-});
-
 function sendMessage(){
 let input=document.getElementById("message");
 let msg=input.value.trim();
@@ -169,6 +130,7 @@ currentChat.push({text:msg,sender:"user"});
 save();
 
 input.value="";
+
 document.getElementById("typing").style.display="block";
 
 fetch(API_URL + "/chat",{
@@ -178,31 +140,16 @@ body:JSON.stringify({message:msg})
 })
 .then(res=>res.json())
 .then(data=>{
-currentMood=data.mood||"neutral";
-document.getElementById("mood").innerText="Mood: "+currentMood;
-
 setTimeout(()=>{
 document.getElementById("typing").style.display="none";
 handleBotReply(data.reply||"...");},500);
-})
-.catch(err=>{
-document.getElementById("typing").style.display="none";
-handleBotReply("⚠ Server error: "+err);
 });
 }
 
 function handleBotReply(text){
-typeEffect(text);
-currentChat.push({text:text,sender:"bot"});
-save();
-speak(text);
-}
-
-function generateImage(){
-let userPrompt=prompt("Enter image prompt:");
-if(!userPrompt)return;
-let url="https://image.pollinations.ai/prompt/"+encodeURIComponent(userPrompt);
-addMessage(`🖼 <b>${userPrompt}</b><br><img src="${url}">`,"bot");
+    typeEffect(text);
+    currentChat.push({text:text,sender:"bot"});
+    save();
 }
 
 function typeEffect(text){
@@ -217,11 +164,7 @@ temp+=text[i]||"";
 div.innerHTML=marked.parse(temp);
 i++;
 chat.scrollTop=chat.scrollHeight;
-
-if(i>=text.length){
-clearInterval(interval);
-updateCounter();
-}
+if(i>=text.length){clearInterval(interval);}
 },15);
 }
 
@@ -233,112 +176,60 @@ div.innerHTML=marked.parse(text);
 chat.appendChild(div);
 chat.scrollTop=chat.scrollHeight;
 }
-
-function speak(text){
-try{
-window.speechSynthesis.cancel();
-let speech=new SpeechSynthesisUtterance(text);
-speech.lang="en-US";
-window.speechSynthesis.speak(speech);
-}catch(e){}
-}
-
-function startListening(){
-if(!('webkitSpeechRecognition' in window)){
-alert("Speech not supported!");
-return;
-}
-let recognition=new webkitSpeechRecognition();
-recognition.lang="en-US";
-recognition.start();
-recognition.onresult=function(event){
-document.getElementById("message").value=event.results[0][0].transcript;
-};
-}
-
-function updateCounter(){
-document.getElementById("counter").innerText="Messages: "+currentChat.length;
-}
 </script>
 
 <style>
-/* SAME UI */
-body.dark {margin:0;font-family:"Segoe UI";background:#343541;color:white;display:flex;height:100vh;}
-body.light {margin:0;font-family:"Segoe UI";background:white;color:black;display:flex;height:100vh;}
-
+body {margin:0;font-family:"Segoe UI";background:#343541;color:white;display:flex;height:100vh;}
 .sidebar {width:260px;background:#202123;padding:10px;display:flex;flex-direction:column;}
-body.light .sidebar {background:#f1f1f1;}
-
-.new-chat {background:#19c37d;padding:10px;border:none;border-radius:6px;cursor:pointer;}
-
-.history {flex:1;margin-top:10px;overflow:auto;}
-.history div {padding:8px;background:#2a2b32;margin-bottom:5px;border-radius:5px;cursor:pointer;}
-body.light .history div {background:#ddd;}
-
 .main {flex:1;display:flex;flex-direction:column;}
-
-.header {padding:12px;text-align:center;border-bottom:1px solid #444;}
-
 .chat-box {flex:1;overflow:auto;padding:20px;}
-
 .message {max-width:800px;margin:10px auto;padding:12px;border-radius:12px;}
 .user {background:#444654;}
 .bot {background:#3a3b45;}
-
-body.light .user {background:#ddd;}
-body.light .bot {background:#eee;}
-
 .input-area {display:flex;padding:10px;border-top:1px solid #444;}
-
 input {flex:1;padding:12px;border-radius:6px;border:none;}
-
 button {margin-left:10px;padding:10px;border:none;border-radius:6px;background:#19c37d;color:white;cursor:pointer;}
-
-#suggestions button {margin:5px;background:#555;}
-.status,.counter {font-size:12px;text-align:center;margin-top:5px;}
-
-img {max-width:100%;border-radius:10px;margin-top:10px;}
-
-.dot {height:6px;width:6px;margin:0 2px;background:white;border-radius:50%;display:inline-block;animation:blink 1.4s infinite;}
-
-@keyframes blink {0%{opacity:0.2;}50%{opacity:1;}100%{opacity:0.2;}}
+.plan-card {background:#2a2b32;padding:15px;margin:10px 0;border-radius:10px;}
 </style>
 </head>
 
 <body onload="initApp()">
 
-<div id="startupScreen">
-    <div id="startupText">Lumina <span>AI</span></div>
-</div>
-
 <div class="sidebar">
-<button onclick="toggleTheme()">🌙 Toggle</button>
-<button class="new-chat" onclick="newChat()">+ New Chat</button>
-<button onclick="downloadChat()">⬇ Download</button>
-<button onclick="clearChat()">🧹 Clear</button>
+<button onclick="openPlans()">➕</button>
+<button onclick="newChat()">+ New Chat</button>
 <div id="history" class="history"></div>
-<div id="status" class="status"></div>
-<div id="counter" class="counter"></div>
 </div>
 
 <div class="main">
 <div class="header">🤖 LuminaAI Ultra</div>
-<div id="mood" style="text-align:center;font-size:12px;color:#aaa;">Mood: neutral</div>
 <div id="chat" class="chat-box"></div>
 
 <div id="typing" style="display:none;text-align:center;">
-<span class="dot"></span><span class="dot"></span><span class="dot"></span>
+<span>Typing...</span>
 </div>
 
-<div id="suggestions"></div>
-
 <div class="input-area">
-<button onclick="startListening()">🎤</button>
-<button onclick="generateImage()">🖼</button>
-<button onclick="startPayment()">➕</button> <!-- ✅ ADDED -->
 <input id="message" placeholder="Type..." oninput="playTypingSound()" />
 <button onclick="sendMessage()">Send</button>
 </div>
+</div>
+
+<!-- PLAN MODAL -->
+<div id="planModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7);">
+  <div style="width:90%; max-width:600px; background:#1e1e1e; margin:50px auto; padding:20px; border-radius:12px;">
+
+    <h2 style="text-align:center;">Choose Your Plan</h2>
+
+    <div style="display:flex; justify-content:center; gap:10px;">
+      <button onclick="showPlanType('personal')">Personal</button>
+      <button onclick="showPlanType('business')">Business</button>
+    </div>
+
+    <div id="plansContainer"></div>
+
+    <button onclick="closePlans()" style="width:100%; margin-top:10px; background:red;">Close</button>
+  </div>
 </div>
 
 </body>
