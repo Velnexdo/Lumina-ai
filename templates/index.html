@@ -25,7 +25,7 @@ function playTypingSound(){
     setTimeout(()=>typingSoundCooldown=false,120);
 }
 
-// 💳 PAYMENT
+// 💳 PAYMENT (⚠️ test key)
 function startPayment(){
     var options = {
         "key": "rzp_live_SfMTVjtUvKYFIM",
@@ -226,10 +226,27 @@ function handleBotReply(text){
 
 // 🖼 IMAGE
 function generateImage(){
-let userPrompt=prompt("Enter image prompt:");
-if(!userPrompt)return;
-let url="https://image.pollinations.ai/prompt/"+encodeURIComponent(userPrompt);
-addMessage(`🖼 <b>${userPrompt}</b><br><img src="${url}">`,"bot");
+let userPrompt = prompt("Enter image prompt:");
+if(!userPrompt) return;
+
+addMessage("🎨 Generating image...","bot");
+
+fetch(API_URL + "/generate-image", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ prompt: userPrompt })
+})
+.then(res => res.json())
+.then(data => {
+    if(data.image){
+        addMessage(`🖼 <b>${userPrompt}</b><br><img src="${data.image}">`, "bot");
+    } else {
+        addMessage("⚠ Failed: " + (data.error || "Unknown error"), "bot");
+    }
+})
+.catch(err=>{
+    addMessage("⚠ Server error: " + err, "bot");
+});
 }
 
 // ✨ typing effect
