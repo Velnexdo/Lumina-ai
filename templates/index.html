@@ -34,7 +34,7 @@ function startPayment(){
         "name": "LuminaAI Ultra",
         "description": "Purchase",
         "handler": function (response){
-            alert("✅ Payment Successful!\nID: " + response.razorpay_payment_id);
+            alert("✅ Payment Successful!\\nID: " + response.razorpay_payment_id);
         },
         "theme": { "color": "#19c37d" }
     };
@@ -237,6 +237,7 @@ function typeEffect(text){
 let chat=document.getElementById("chat");
 let div=document.createElement("div");
 div.classList.add("message","bot");
+div.style.animation = "messagePop 0.3s ease-out forwards";
 chat.appendChild(div);
 
 let i=0,temp="";
@@ -258,6 +259,7 @@ function addMessage(text,sender){
 let chat=document.getElementById("chat");
 let div=document.createElement("div");
 div.classList.add("message",sender);
+div.style.animation = sender === "user" ? "messageSlideRight 0.4s ease-out forwards" : "messageSlideLeft 0.4s ease-out forwards";
 div.innerHTML=marked.parse(text);
 chat.appendChild(div);
 chat.scrollTop=chat.scrollHeight;
@@ -297,43 +299,126 @@ document.getElementById("counter").innerText="Messages: "+currentChat.length;
 body.dark {margin:0;font-family:"Segoe UI";background:#343541;color:white;display:flex;height:100vh;}
 body.light {margin:0;font-family:"Segoe UI";background:white;color:black;display:flex;height:100vh;}
 
-.sidebar {width:260px;background:#202123;padding:10px;display:flex;flex-direction:column;}
+.sidebar {width:260px;background:#202123;padding:10px;display:flex;flex-direction:column;animation:sidebarSlide 0.5s ease-out;}
 body.light .sidebar {background:#f1f1f1;}
 
-.new-chat {background:#19c37d;padding:10px;border:none;border-radius:6px;cursor:pointer;}
+.new-chat {background:#19c37d;padding:10px;border:none;border-radius:6px;cursor:pointer;transition:all 0.3s ease;}
+.new-chat:hover {transform:scale(1.05);box-shadow:0 4px 15px rgba(25,195,125,0.4);}
 
 .history {flex:1;margin-top:10px;overflow:auto;}
-.history div {padding:8px;background:#2a2b32;margin-bottom:5px;border-radius:5px;cursor:pointer;}
+.history div {padding:8px;background:#2a2b32;margin-bottom:5px;border-radius:5px;cursor:pointer;transition:all 0.3s ease;}
+.history div:hover {background:#3a3b45;transform:translateX(5px);}
 body.light .history div {background:#ddd;}
+body.light .history div:hover {background:#ccc;}
 
-.main {flex:1;display:flex;flex-direction:column;}
+.main {flex:1;display:flex;flex-direction:column;animation:mainFade 0.6s ease-out;}
 
-.header {padding:12px;text-align:center;border-bottom:1px solid #444;}
+.header {padding:12px;text-align:center;border-bottom:1px solid #444;animation:headerSlide 0.5s ease-out;}
 
 .chat-box {flex:1;overflow:auto;padding:20px;scroll-behavior:smooth;}
 
-.message {max-width:800px;margin:10px auto;padding:12px;border-radius:12px;}
+.message {max-width:800px;margin:10px auto;padding:12px;border-radius:12px;opacity:0;transform:translateY(20px);}
 .user {background:#444654;}
 .bot {background:#3a3b45;}
 
 body.light .user {background:#ddd;}
 body.light .bot {background:#eee;}
 
-.input-area {display:flex;padding:10px;border-top:1px solid #444;}
+.input-area {display:flex;padding:10px;border-top:1px solid #444;animation:inputSlide 0.5s ease-out;}
 
-input {flex:1;padding:12px;border-radius:6px;border:none;}
+input {flex:1;padding:12px;border-radius:6px;border:none;transition:all 0.3s ease;}
+input:focus {outline:none;box-shadow:0 0 10px rgba(25,195,125,0.5);}
 
-button {margin-left:10px;padding:10px;border:none;border-radius:6px;background:#19c37d;color:white;cursor:pointer;}
+button {margin-left:10px;padding:10px;border:none;border-radius:6px;background:#19c37d;color:white;cursor:pointer;transition:all 0.3s ease;}
+button:hover {transform:translateY(-2px);box-shadow:0 4px 15px rgba(25,195,125,0.4);}
+button:active {transform:translateY(0);}
 
-#suggestions button {margin:5px;background:#555;}
+#suggestions {animation:suggestionsFade 0.5s ease-out;}
+#suggestions button {margin:5px;background:#555;transition:all 0.3s ease;}
+#suggestions button:hover {background:#666;transform:scale(1.05);}
 
 .status,.counter {font-size:12px;text-align:center;margin-top:5px;}
 
-img {max-width:100%;border-radius:10px;margin-top:10px;}
+img {max-width:100%;border-radius:10px;margin-top:10px;animation:ImageFade 0.5s ease-out;}
 
 .dot {height:6px;width:6px;margin:0 2px;background:white;border-radius:50%;display:inline-block;animation:blink 1.4s infinite;}
 
 @keyframes blink {0%{opacity:0.2;}50%{opacity:1;}100%{opacity:0.2;}}
+
+/* 🎨 Animation Keyframes */
+@keyframes sidebarSlide {
+    from {opacity:0;transform:translateX(-50px);}
+    to {opacity:1;transform:translateX(0);}
+}
+
+@keyframes mainFade {
+    from {opacity:0;}
+    to {opacity:1;}
+}
+
+@keyframes headerSlide {
+    from {opacity:0;transform:translateY(-20px);}
+    to {opacity:1;transform:translateY(0);}
+}
+
+@keyframes inputSlide {
+    from {opacity:0;transform:translateY(20px);}
+    to {opacity:1;transform:translateY(0);}
+}
+
+@keyframes suggestionsFade {
+    from {opacity:0;}
+    to {opacity:1;}
+}
+
+@keyframes messageSlideRight {
+    from {opacity:0;transform:translateX(50px);}
+    to {opacity:1;transform:translateX(0);}
+}
+
+@keyframes messageSlideLeft {
+    from {opacity:0;transform:translateX(-50px);}
+    to {opacity:1;transform:translateX(0);}
+}
+
+@keyframes messagePop {
+    0% {opacity:0;transform:scale(0.9);}
+    50% {transform:scale(1.02);}
+    100% {opacity:1;transform:scale(1);}
+}
+
+@keyframes ImageFade {
+    from {opacity:0;filter:blur(5px);}
+    to {opacity:1;filter:blur(0);}
+}
+
+/* 🌟 Ripple effect on buttons */
+button {position:relative;overflow:hidden;}
+button::after {
+    content:"";
+    position:absolute;
+    top:50%;
+    left:50%;
+    width:0;
+    height:0;
+    background:rgba(255,255,255,0.3);
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+    transition:width 0.6s,height 0.6s;
+}
+button:active::after {
+    width:200px;
+    height:200px;
+}
+
+/* 🎯 Smooth scroll */
+.chat-box::-webkit-scrollbar {width:8px;}
+.chat-box::-webkit-scrollbar-track {background:#202123;}
+.chat-box::-webkit-scrollbar-thumb {background:#19c37d;border-radius:4px;}
+.chat-box::-webkit-scrollbar-thumb:hover {background:#149c70;}
+
+body.light .chat-box::-webkit-scrollbar-track {background:#f1f1f1;}
+body.light .chat-box::-webkit-scrollbar-thumb {background:#19c37d;}
 </style>
 </head>
 
@@ -354,7 +439,7 @@ img {max-width:100%;border-radius:10px;margin-top:10px;}
 <div id="mood" style="text-align:center;font-size:12px;color:#aaa;">Mood: neutral</div>
 <div id="chat" class="chat-box"></div>
 
-<div id="typing" style="display:none;text-align:center;">
+<div id="typing" style="display:none;text-align:center;animation:fadeDot 0.5s ease-out;">
 <span class="dot"></span><span class="dot"></span><span class="dot"></span>
 </div>
 
