@@ -71,7 +71,7 @@ def ask_ai(msg):
                         "role": "system",
                         "content": (
                             "You are LuminaAI Ultra, "
-                            "a smart AI assistant made by V_Velnexdo. "
+                            "a smart AI assistant made by Velnexdo. "
                             "You help with coding, ideas, chatting, "
                             "problem solving and creativity."
                         )
