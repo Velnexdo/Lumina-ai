@@ -21,7 +21,7 @@ openai_client = OpenAI(
 )
 
 # 🔥 Grok Model
-MODEL = "grok-4-0709"
+MODEL = "grok-2"
 
 # 🔥 Whisper Model
 WHISPER_MODEL = "openai/whisper-large-v3"
