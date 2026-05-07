@@ -12,8 +12,8 @@ CORS(app)
 XAI_API_KEY = os.environ.get("XAI_API_KEY")
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
-# 🔥 Grok Model
-MODEL = "grok-4-0709"
+# ✅ WORKING MODEL
+MODEL = "grok-3"
 
 # ================= SAFE MATH =================
 operators = {
@@ -25,12 +25,12 @@ operators = {
     ast.Mod: operator.mod
 }
 
-
 def safe_eval(expr):
     try:
         node = ast.parse(expr, mode='eval').body
 
         def eval_node(n):
+
             if isinstance(n, ast.Constant):
                 return n.value
 
@@ -55,6 +55,7 @@ def ask_ai(msg):
         return "⚠️ Missing xAI API key"
 
     try:
+
         res = requests.post(
             "https://api.x.ai/v1/chat/completions",
             headers={
@@ -66,7 +67,12 @@ def ask_ai(msg):
                 "messages": [
                     {
                         "role": "system",
-                        "content": "You are LuminaAI Ultra, an advanced helpful AI assistant made by V_Velnexdo. Be smart, fast, friendly, and professional."
+                        "content": (
+                            "You are LuminaAI Ultra, a smart AI assistant "
+                            "created by V_Velnexdo. "
+                            "You help with coding, ideas, chatting, "
+                            "problem solving and creativity."
+                        )
                     },
                     {
                         "role": "user",
@@ -76,12 +82,14 @@ def ask_ai(msg):
                 "temperature": 0.7,
                 "max_tokens": 800
             },
-            timeout=40
+            timeout=60
         )
 
         # DEBUG
         if res.status_code != 200:
-            print("xAI ERROR:", res.text)
+            print("xAI ERROR:")
+            print(res.text)
+
             return f"⚠️ API Error: {res.status_code}"
 
         data = res.json()
@@ -99,6 +107,7 @@ def generate_image(prompt):
         return {"error": "Missing OpenRouter API key"}
 
     try:
+
         res = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             headers={
@@ -115,34 +124,48 @@ def generate_image(prompt):
                 ],
                 "modalities": ["image"]
             },
-            timeout=60
+            timeout=120
         )
 
         if res.status_code != 200:
-            print("IMAGE ERROR:", res.text)
+            print("IMAGE ERROR:")
+            print(res.text)
+
             return {"error": res.text}
 
         data = res.json()
 
-        image_url = data["choices"][0]["message"]["images"][0]["image_url"]
+        image_url = (
+            data["choices"][0]
+            ["message"]
+            ["images"][0]
+            ["image_url"]
+        )
 
-        return {"image": image_url}
+        return {
+            "image": image_url
+        }
 
     except Exception as e:
         print("IMAGE ERROR:", e)
-        return {"error": str(e)}
 
-# ================= ROUTES =================
+        return {
+            "error": str(e)
+        }
+
+# ================= HOME =================
 @app.route("/")
 def home():
     return render_template("index.html")
 
-# ================= CHAT ROUTE =================
+# ================= CHAT =================
 @app.route("/chat", methods=["POST"])
 def chat():
 
     try:
+
         data = request.json or {}
+
         msg = data.get("message", "").strip()
 
         if not msg:
@@ -150,7 +173,7 @@ def chat():
                 "reply": "Say something 😄"
             })
 
-        # Math Support
+        # Math support
         math = safe_eval(msg)
 
         if math is not None:
@@ -158,34 +181,37 @@ def chat():
                 "reply": f"Answer: {math}"
             })
 
-        # Ask AI
+        # AI reply
         reply = ask_ai(msg)
 
         return jsonify({
             "reply": reply,
-            "mood": "smart",
             "model": MODEL,
+            "mood": "smart",
             "suggestions": [
-                "Explain quantum physics",
                 "Help me code",
-                "Make a Roblox script",
-                "Generate startup ideas"
+                "Tell me startup ideas",
+                "Explain AI",
+                "Make story"
             ]
         })
 
     except Exception as e:
+
         print("CHAT ERROR:", e)
 
         return jsonify({
             "reply": "⚠️ Server error"
         }), 500
 
-# ================= IMAGE ROUTE =================
+# ================= IMAGE =================
 @app.route("/generate-image", methods=["POST"])
 def image():
 
     try:
+
         data = request.json or {}
+
         prompt = data.get("prompt", "").strip()
 
         if not prompt:
@@ -194,18 +220,21 @@ def image():
             })
 
         result = generate_image(prompt)
+
         return jsonify(result)
 
     except Exception as e:
+
         print("IMAGE ROUTE ERROR:", e)
 
         return jsonify({
             "error": "Image generation failed"
         }), 500
 
-# ================= HEALTH CHECK =================
+# ================= HEALTH =================
 @app.route("/health")
 def health():
+
     return jsonify({
         "status": "online",
         "model": MODEL
@@ -213,6 +242,7 @@ def health():
 
 # ================= RUN =================
 if __name__ == "__main__":
+
     port = int(os.environ.get("PORT", 10000))
 
     app.run(
