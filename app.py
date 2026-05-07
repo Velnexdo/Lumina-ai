@@ -12,7 +12,7 @@ CORS(app)
 XAI_API_KEY = os.environ.get("XAI_API_KEY")
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
-MODEL = "grok-4-0709"  # ⚠️ agar 400 error aaye to "grok-2-latest" try karna
+MODEL = "grok-2-latest"  # ⚠️ agar 400 error aaye to "grok-2-latest" try karna
 
 # ================= SAFE MATH =================
 operators_map = {
