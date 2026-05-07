@@ -1,332 +1,1198 @@
-from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS
-from openai import OpenAI
-import os
-import requests
-import ast
-import operator
-import tempfile
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LuminaAI Ultra</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-app = Flask(__name__, template_folder="templates", static_folder="static")
-CORS(app)
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-# ================= CONFIG =================
-XAI_API_KEY = os.environ.get("XAI_API_KEY")
-OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+<style>
 
-# ================= OPENAI CLIENT =================
-openai_client = OpenAI(
-    api_key=OPENAI_API_KEY
-)
-
-# 🔥 Grok Model
-MODEL = "grok-4-0709"
-
-# 🔥 Whisper Model
-WHISPER_MODEL = "openai/whisper-large-v3"
-
-# ================= SAFE MATH =================
-operators = {
-    ast.Add: operator.add,
-    ast.Sub: operator.sub,
-    ast.Mult: operator.mul,
-    ast.Div: operator.truediv,
-    ast.Pow: operator.pow,
-    ast.Mod: operator.mod
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
 }
 
+html,body{
+height:100%;
+overflow:hidden;
+}
+
+body.dark{
+font-family:"Segoe UI";
+background:#343541;
+color:white;
+display:flex;
+height:100vh;
+overflow:hidden;
+}
+
+body.light{
+font-family:"Segoe UI";
+background:white;
+color:black;
+display:flex;
+height:100vh;
+overflow:hidden;
+}
+
+/* 🌌 Animated Background */
+
+body::before{
+content:"";
+position:fixed;
+inset:0;
+background:
+radial-gradient(circle at top right,rgba(25,195,125,0.15),transparent 40%),
+radial-gradient(circle at bottom left,rgba(0,150,255,0.12),transparent 35%);
+pointer-events:none;
+z-index:0;
+animation:bgMove 8s infinite alternate ease-in-out;
+}
+
+/* SIDEBAR */
+
+.sidebar{
+width:260px;
+background:#202123;
+padding:10px;
+display:flex;
+flex-direction:column;
+z-index:2;
+animation:sidebarSlide .5s ease;
+overflow:hidden;
+}
+
+body.light .sidebar{
+background:#f1f1f1;
+}
+
+/* MAIN */
+
+.main{
+flex:1;
+display:flex;
+flex-direction:column;
+position:relative;
+z-index:2;
+overflow:hidden;
+animation:mainFade .5s ease;
+}
+
+/* HEADER */
+
+.header{
+padding:15px;
+text-align:center;
+font-size:24px;
+font-weight:bold;
+border-bottom:1px solid #444;
+animation:headerSlide .5s ease;
+flex-shrink:0;
+}
+
+.header span{
+color:#19c37d;
+}
+
+/* MOOD */
+
+#mood{
+text-align:center;
+font-size:12px;
+color:#aaa;
+padding:5px;
+flex-shrink:0;
+}
+
+/* CHAT CONTAINER */
+
+#chatContainer{
+flex:1;
+display:flex;
+flex-direction:column;
+overflow:hidden;
+position:relative;
+}
+
+/* CHAT */
+
+.chat-box{
+flex:1;
+overflow-y:auto;
+overflow-x:hidden;
+padding:20px;
+padding-bottom:140px;
+display:none;
+scroll-behavior:smooth;
+height:100%;
+}
+
+/* MESSAGE */
+
+.message{
+max-width:800px;
+margin:10px auto;
+padding:14px;
+border-radius:14px;
+opacity:0;
+transform:translateY(20px);
+animation:messagePop .35s ease forwards;
+word-wrap:break-word;
+overflow-wrap:break-word;
+}
+
+.user{
+background:#444654;
+animation:messageSlideRight .35s ease forwards;
+}
+
+.bot{
+background:#3a3b45;
+animation:messageSlideLeft .35s ease forwards;
+}
+
+body.light .user{
+background:#ddd;
+}
+
+body.light .bot{
+background:#eee;
+}
+
+/* INPUT */
+
+.input-area{
+display:flex;
+padding:10px;
+border-top:1px solid #444;
+gap:10px;
+animation:inputSlide .5s ease;
+flex-shrink:0;
+background:inherit;
+position:relative;
+z-index:5;
+}
+
+input{
+flex:1;
+padding:13px;
+border:none;
+border-radius:10px;
+font-size:15px;
+transition:.3s;
+}
+
+input:focus{
+outline:none;
+box-shadow:0 0 12px rgba(25,195,125,0.4);
+}
+
+/* BUTTON */
+
+button{
+padding:10px 14px;
+border:none;
+border-radius:10px;
+background:#19c37d;
+color:white;
+cursor:pointer;
+transition:.25s;
+position:relative;
+overflow:hidden;
+}
+
+button:hover{
+transform:translateY(-2px);
+box-shadow:0 4px 15px rgba(25,195,125,0.35);
+}
+
+button::after{
+content:"";
+position:absolute;
+top:50%;
+left:50%;
+width:0;
+height:0;
+background:rgba(255,255,255,0.25);
+border-radius:50%;
+transform:translate(-50%,-50%);
+transition:.6s;
+}
+
+button:active::after{
+width:220px;
+height:220px;
+}
+
+/* HISTORY */
+
+.history{
+flex:1;
+overflow:auto;
+margin-top:10px;
+}
+
+.history div{
+padding:10px;
+background:#2a2b32;
+margin-bottom:6px;
+border-radius:8px;
+cursor:pointer;
+transition:.3s;
+animation:fadeIn .4s ease;
+}
+
+.history div:hover{
+background:#3a3b45;
+transform:translateX(5px);
+}
+
+body.light .history div{
+background:#ddd;
+}
+
+body.light .history div:hover{
+background:#ccc;
+}
+
+/* SUGGESTIONS */
+
+#suggestions{
+padding:10px;
+text-align:center;
+animation:suggestionsFade .5s ease;
+flex-shrink:0;
+}
+
+#suggestions button{
+margin:5px;
+background:#555;
+}
+
+/* STATUS */
+
+.status,.counter{
+font-size:12px;
+text-align:center;
+margin-top:5px;
+}
+
+/* IMAGE */
+
+img{
+max-width:100%;
+border-radius:10px;
+margin-top:10px;
+animation:imageFade .5s ease;
+}
+
+/* TYPING */
+
+.typing{
+display:none;
+text-align:center;
+padding:10px;
+flex-shrink:0;
+}
+
+.dot{
+height:7px;
+width:7px;
+margin:0 2px;
+background:white;
+border-radius:50%;
+display:inline-block;
+animation:blink 1.4s infinite;
+}
+
+.dot:nth-child(2){
+animation-delay:.2s;
+}
+
+.dot:nth-child(3){
+animation-delay:.4s;
+}
+
+/* WELCOME SCREEN */
+
+.welcome-screen{
+flex:1;
+display:flex;
+align-items:center;
+justify-content:center;
+flex-direction:column;
+text-align:center;
+padding:30px;
+animation:welcomeFade .6s ease;
+overflow-y:auto;
+}
+
+.welcome-title{
+font-size:50px;
+font-weight:700;
+margin-bottom:15px;
+background:linear-gradient(90deg,#fff,#19c37d);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+body.light .welcome-title{
+background:linear-gradient(90deg,#000,#19c37d);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.welcome-sub{
+font-size:18px;
+opacity:.7;
+margin-bottom:25px;
+}
+
+.quick-grid{
+display:flex;
+flex-wrap:wrap;
+justify-content:center;
+gap:12px;
+max-width:850px;
+}
+
+.quick-card{
+background:#2a2b32;
+padding:16px;
+border-radius:14px;
+width:230px;
+cursor:pointer;
+transition:.3s;
+animation:cardFade .5s ease;
+}
+
+.quick-card:hover{
+transform:translateY(-5px) scale(1.03);
+background:#3a3b45;
+}
+
+body.light .quick-card{
+background:#eee;
+}
+
+body.light .quick-card:hover{
+background:#ddd;
+}
+
+.quick-card h3{
+margin-bottom:8px;
+font-size:17px;
+}
+
+.quick-card p{
+font-size:13px;
+opacity:.8;
+}
+
+/* SCROLLBAR */
+
+.chat-box::-webkit-scrollbar,
+.history::-webkit-scrollbar{
+width:8px;
+}
+
+.chat-box::-webkit-scrollbar-thumb,
+.history::-webkit-scrollbar-thumb{
+background:#19c37d;
+border-radius:10px;
+}
+
+/* ANIMATIONS */
+
+@keyframes blink{
+0%{opacity:.2;}
+50%{opacity:1;}
+100%{opacity:.2;}
+}
+
+@keyframes sidebarSlide{
+from{
+opacity:0;
+transform:translateX(-40px);
+}
+to{
+opacity:1;
+transform:translateX(0);
+}
+}
+
+@keyframes mainFade{
+from{opacity:0;}
+to{opacity:1;}
+}
+
+@keyframes headerSlide{
+from{
+opacity:0;
+transform:translateY(-20px);
+}
+to{
+opacity:1;
+transform:translateY(0);
+}
+}
+
+@keyframes inputSlide{
+from{
+opacity:0;
+transform:translateY(20px);
+}
+to{
+opacity:1;
+transform:translateY(0);
+}
+}
+
+@keyframes messageSlideRight{
+from{
+opacity:0;
+transform:translateX(40px);
+}
+to{
+opacity:1;
+transform:translateX(0);
+}
+}
+
+@keyframes messageSlideLeft{
+from{
+opacity:0;
+transform:translateX(-40px);
+}
+to{
+opacity:1;
+transform:translateX(0);
+}
+}
+
+@keyframes messagePop{
+0%{
+opacity:0;
+transform:scale(.92);
+}
+100%{
+opacity:1;
+transform:scale(1);
+}
+}
+
+@keyframes imageFade{
+from{
+opacity:0;
+filter:blur(4px);
+}
+to{
+opacity:1;
+filter:blur(0);
+}
+}
+
+@keyframes fadeIn{
+from{opacity:0;}
+to{opacity:1;}
+}
+
+@keyframes bgMove{
+from{
+transform:translateY(0px);
+}
+to{
+transform:translateY(-20px);
+}
+}
+
+@keyframes welcomeFade{
+from{
+opacity:0;
+transform:translateY(20px);
+}
+to{
+opacity:1;
+transform:translateY(0);
+}
+}
+
+@keyframes cardFade{
+from{
+opacity:0;
+transform:translateY(15px);
+}
+to{
+opacity:1;
+transform:translateY(0);
+}
+}
+
+@media(max-width:700px){
+
+.sidebar{
+width:85px;
+}
+
+.sidebar button{
+font-size:11px;
+padding:8px;
+}
+
+.header{
+font-size:17px;
+}
+
+.message{
+max-width:95%;
+font-size:14px;
+}
+
+.welcome-title{
+font-size:30px;
+}
+
+.quick-card{
+width:90%;
+}
+
+.input-area{
+gap:5px;
+padding:8px;
+}
+
+button{
+padding:9px;
+font-size:12px;
+}
+}
+
+</style>
+</head>
+
+<body class="dark" onload="initApp()">
+
+<div class="sidebar">
+
+<button onclick="toggleTheme()">🌙</button>
+
+<button onclick="newChat()">➕</button>
+
+<button onclick="clearChat()">🧹</button>
+
+<div id="history" class="history"></div>
+
+<div id="status" class="status"></div>
+
+<div id="counter" class="counter"></div>
+
+</div>
+
+<div class="main">
+
+<div class="header">
+🤖 <span>LuminaAI Ultra</span>
+</div>
+
+<div id="mood">
+Mood: neutral
+</div>
+
+<div id="chatContainer">
+
+<div id="welcomeScreen" class="welcome-screen">
+
+<div class="welcome-title">
+What’s on your mind today?
+</div>
+
+<div class="welcome-sub">
+Powered by LuminaAI Ultra ✨
+</div>
+
+<div class="quick-grid">
+
+<div class="quick-card" onclick="setPrompt('Explain black holes simply')">
+<h3>🌌 Explain Concepts</h3>
+<p>Ask AI to explain science, coding, space & more.</p>
+</div>
+
+<div class="quick-card" onclick="setPrompt('Write a Roblox script')">
+<h3>💻 Coding Help</h3>
+<p>Create scripts, websites and advanced projects.</p>
+</div>
+
+<div class="quick-card" onclick="setPrompt('Tell me a funny joke')">
+<h3>😂 Entertainment</h3>
+<p>Get jokes, stories, fun facts and games.</p>
+</div>
+
+<div class="quick-card" onclick="setPrompt('Generate a futuristic city image')">
+<h3>🖼 Image Ideas</h3>
+<p>Create AI images and cinematic concepts.</p>
+</div>
+
+</div>
+
+</div>
+
+<div id="chat" class="chat-box"></div>
+
+</div>
+
+<div class="typing" id="typing">
+<span class="dot"></span>
+<span class="dot"></span>
+<span class="dot"></span>
+</div>
+
+<div id="suggestions"></div>
+
+<div class="input-area">
+
+<button onclick="startListening()">🎤</button>
+
+<button onclick="generateImage()">🖼</button>
+
+<button onclick="startPayment()">💎</button>
+
+<input id="message" placeholder="Ask anything..." oninput="playTypingSound()">
+
+<button onclick="sendMessage()">Send</button>
+
+</div>
+
+</div>
+
+<script>
+
+let typingSoundCooldown = false;
+let currentMood = "neutral";
+
+const API_URL = window.location.origin;
+
+let chats = JSON.parse(localStorage.getItem("chats") || "[]");
+
+let currentChat = [];
+
+/* INIT */
+
+function initApp(){
+
+loadTheme();
+
+showSuggestions();
+
+updateStatus();
+
+renderHistory();
+
+updateCounter();
+
+updateWelcomeScreen();
+}
+
+/* WELCOME SCREEN */
+
+function updateWelcomeScreen(){
+
+let welcome = document.getElementById("welcomeScreen");
+
+let chat = document.getElementById("chat");
+
+if(currentChat.length === 0){
+
+welcome.style.display = "flex";
+
+chat.style.display = "none";
+
+}else{
+
+welcome.style.display = "none";
+
+chat.style.display = "block";
+}
+}
 
-def safe_eval(expr):
+/* AUTO SEND */
 
-    try:
+function setPrompt(text){
 
-        node = ast.parse(expr, mode='eval').body
-
-        def eval_node(n):
+document.getElementById("message").value = text;
 
-            if isinstance(n, ast.Constant):
-                return n.value
+sendMessage();
+}
 
-            elif isinstance(n, ast.BinOp):
+/* THEME */
 
-                return operators[type(n.op)](
-                    eval_node(n.left),
-                    eval_node(n.right)
-                )
+function toggleTheme(){
 
-            elif isinstance(n, ast.UnaryOp):
-                return -eval_node(n.operand)
+let theme = localStorage.getItem("theme") || "dark";
 
-        return eval_node(node)
+if(theme==="dark"){
 
-    except:
-        return None
+document.body.classList.replace("dark","light");
 
-# ================= AI CHAT =================
-def ask_ai(msg):
+localStorage.setItem("theme","light");
 
-    if not XAI_API_KEY:
-        return "⚠️ Missing xAI API key"
+}else{
 
-    try:
+document.body.classList.replace("light","dark");
 
-        res = requests.post(
-            "https://api.x.ai/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {XAI_API_KEY}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": MODEL,
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": (
-                            "You are LuminaAI Ultra, "
-                            "an advanced helpful AI assistant "
-                            "made by V_Velnexdo. "
-                            "Be smart, fast, friendly, and professional."
-                        )
-                    },
-                    {
-                        "role": "user",
-                        "content": msg
-                    }
-                ],
-                "temperature": 0.7,
-                "max_tokens": 800
-            },
-            timeout=40
-        )
+localStorage.setItem("theme","dark");
+}
+}
 
-        # DEBUG
-        if res.status_code != 200:
+function loadTheme(){
 
-            print("xAI ERROR:", res.text)
+let theme = localStorage.getItem("theme") || "dark";
 
-            return f"⚠️ API Error: {res.status_code}"
+document.body.classList.add(theme);
+}
 
-        data = res.json()
+/* SOUND */
 
-        return data["choices"][0]["message"]["content"]
+function playTypingSound(){
 
-    except Exception as e:
+if(typingSoundCooldown) return;
 
-        print("AI ERROR:", e)
+typingSoundCooldown = true;
 
-        return "⚠️ AI unavailable"
+let audio = new Audio("https://www.soundjay.com/button/sounds/button-16.mp3");
 
-# ================= IMAGE GENERATION =================
-def generate_image(prompt):
+audio.volume = 0.1;
 
-    if not OPENROUTER_API_KEY:
-        return {"error": "Missing OpenRouter API key"}
+audio.play().catch(()=>{});
 
-    try:
+setTimeout(()=>{
+typingSoundCooldown=false;
+},120);
+}
 
-        res = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "openai/gpt-image-1",
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                "modalities": ["image"]
-            },
-            timeout=60
-        )
+/* PAYMENT */
 
-        if res.status_code != 200:
+function startPayment(){
 
-            print("IMAGE ERROR:", res.text)
+var options = {
 
-            return {"error": res.text}
+"key":"rzp_live_SfMTVjtUvKYFIM",
 
-        data = res.json()
+"amount":9900,
 
-        image_url = (
-            data["choices"][0]
-            ["message"]["images"][0]
-            ["image_url"]
-        )
+"currency":"INR",
 
-        return {
-            "image": image_url
-        }
+"name":"LuminaAI Ultra",
 
-    except Exception as e:
+"description":"Purchase",
 
-        print("IMAGE ERROR:", e)
+"handler":function(response){
 
-        return {
-            "error": str(e)
-        }
+alert("✅ Payment Successful!");
+},
 
-# ================= SPEECH TO TEXT =================
-def transcribe_audio(audio_file):
+"theme":{"color":"#19c37d"}
+};
 
-    if not OPENAI_API_KEY:
-        return "⚠️ Missing OpenAI API key"
+var rzp = new Razorpay(options);
 
-    try:
+rzp.open();
+}
 
-        with tempfile.NamedTemporaryFile(
-            delete=False,
-            suffix=".webm"
-        ) as temp:
+/* STATUS */
 
-            audio_file.save(temp.name)
+function updateStatus(){
 
-            with open(temp.name, "rb") as file:
+let s = document.getElementById("status");
 
-                transcription = openai_client.audio.transcriptions.create(
-                    model=WHISPER_MODEL,
-                    file=file
-                )
+s.innerText = navigator.onLine
+? "🟢 Online | Mood: " + currentMood
+: "🔴 Offline";
+}
 
-        return transcription.text
+window.addEventListener("online",updateStatus);
 
-    except Exception as e:
+window.addEventListener("offline",updateStatus);
 
-        print("WHISPER ERROR:", e)
+/* SUGGESTIONS */
 
-        return "⚠️ Speech recognition failed"
+function showSuggestions(){
 
-# ================= ROUTES =================
-@app.route("/")
-def home():
+let box = document.getElementById("suggestions");
 
-    return render_template("index.html")
+box.innerHTML="";
 
-# ================= CHAT ROUTE =================
-@app.route("/chat", methods=["POST"])
-def chat():
+[
+"Hi",
+"What is AI?",
+"Tell me a joke",
+"Explain planet",
+"Write Roblox Script"
+]
+.forEach(s=>{
 
-    try:
+let b=document.createElement("button");
 
-        data = request.json or {}
+b.innerText=s;
 
-        msg = data.get("message", "").strip()
+b.onclick=()=>{
 
-        if not msg:
+document.getElementById("message").value=s;
 
-            return jsonify({
-                "reply": "Say something 😄"
-            })
+sendMessage();
+};
 
-        # ================= MATH SUPPORT =================
-        math = safe_eval(msg)
+box.appendChild(b);
+});
+}
 
-        if math is not None:
+/* SAVE */
 
-            return jsonify({
-                "reply": f"Answer: {math}"
-            })
+function save(){
 
-        # ================= AI CHAT =================
-        reply = ask_ai(msg)
+localStorage.setItem("chats",JSON.stringify(chats));
 
-        return jsonify({
-            "reply": reply,
-            "mood": "smart",
-            "model": MODEL,
-            "suggestions": [
-                "Explain quantum physics",
-                "Help me code",
-                "Make a Roblox script",
-                "Generate startup ideas"
-            ]
-        })
+updateCounter();
+}
 
-    except Exception as e:
+/* NEW CHAT */
 
-        print("CHAT ERROR:", e)
+function newChat(){
 
-        return jsonify({
-            "reply": "⚠️ Server error"
-        }), 500
+if(currentChat.length>0){
 
-# ================= IMAGE ROUTE =================
-@app.route("/generate-image", methods=["POST"])
-def image():
+chats.push(currentChat);
 
-    try:
+save();
+}
 
-        data = request.json or {}
+currentChat=[];
 
-        prompt = data.get("prompt", "").strip()
+document.getElementById("chat").innerHTML="";
 
-        if not prompt:
+renderHistory();
 
-            return jsonify({
-                "error": "Prompt required"
-            })
+updateWelcomeScreen();
+}
 
-        result = generate_image(prompt)
+/* CLEAR */
 
-        return jsonify(result)
+function clearChat(){
 
-    except Exception as e:
+currentChat=[];
 
-        print("IMAGE ROUTE ERROR:", e)
+document.getElementById("chat").innerHTML="";
 
-        return jsonify({
-            "error": "Image generation failed"
-        }), 500
+save();
 
-# ================= SPEECH ROUTE =================
-@app.route("/transcribe", methods=["POST"])
-def transcribe():
+updateWelcomeScreen();
+}
 
-    try:
+/* HISTORY */
 
-        if "audio" not in request.files:
+function renderHistory(){
 
-            return jsonify({
-                "error": "No audio uploaded"
-            }), 400
+let h=document.getElementById("history");
 
-        audio = request.files["audio"]
+h.innerHTML="";
 
-        text = transcribe_audio(audio)
+chats.forEach((c,i)=>{
 
-        return jsonify({
-            "text": text
-        })
+let d=document.createElement("div");
 
-    except Exception as e:
+d.innerText="Chat "+(i+1);
 
-        print("TRANSCRIBE ERROR:", e)
+d.onclick=()=>loadChat(i);
 
-        return jsonify({
-            "error": "Speech transcription failed"
-        }), 500
+h.appendChild(d);
+});
+}
 
-# ================= HEALTH CHECK =================
-@app.route("/health")
-def health():
+function loadChat(i){
 
-    return jsonify({
-        "status": "online",
-        "model": MODEL,
-        "speech_model": WHISPER_MODEL
-    })
+currentChat=chats[i];
 
-# ================= RUN =================
-if __name__ == "__main__":
+document.getElementById("chat").innerHTML="";
 
-    port = int(os.environ.get("PORT", 10000))
+currentChat.forEach(m=>addMessage(m.text,m.sender));
 
-    app.run(
-        host="0.0.0.0",
-        port=port,
-        debug=True
-    )
+updateWelcomeScreen();
+}
+
+/* ENTER SEND */
+
+document.addEventListener("keypress",function(e){
+
+if(e.key==="Enter"){
+
+e.preventDefault();
+
+sendMessage();
+}
+});
+
+/* SEND */
+
+function sendMessage(){
+
+let input=document.getElementById("message");
+
+let msg=input.value.trim();
+
+if(!msg) return;
+
+addMessage(msg,"user");
+
+currentChat.push({
+text:msg,
+sender:"user"
+});
+
+updateWelcomeScreen();
+
+save();
+
+input.value="";
+
+document.getElementById("typing").style.display="block";
+
+smoothAutoScroll();
+
+fetch(API_URL + "/chat",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+message:msg
+})
+})
+.then(res=>res.json())
+
+.then(data=>{
+
+currentMood=data.mood || "neutral";
+
+document.getElementById("mood").innerText =
+"Mood: " + currentMood;
+
+updateSuggestions(data.suggestions);
+
+setTimeout(()=>{
+
+document.getElementById("typing").style.display="none";
+
+handleBotReply(data.reply || "...");
+
+},500);
+})
+
+.catch(err=>{
+
+document.getElementById("typing").style.display="none";
+
+handleBotReply("⚠ Server error");
+});
+}
+
+/* UPDATE SUGGESTIONS */
+
+function updateSuggestions(list){
+
+if(!list) return;
+
+let box=document.getElementById("suggestions");
+
+box.innerHTML="";
+
+list.forEach(s=>{
+
+let b=document.createElement("button");
+
+b.innerText=s;
+
+b.onclick=()=>{
+
+document.getElementById("message").value=s;
+
+sendMessage();
+};
+
+box.appendChild(b);
+});
+}
+
+/* BOT REPLY */
+
+function handleBotReply(text){
+
+let delay=Math.random()*500+300;
+
+setTimeout(()=>{
+
+typeEffect(text);
+
+currentChat.push({
+text:text,
+sender:"bot"
+});
+
+save();
+
+speak(text);
+
+},delay);
+}
+
+/* IMAGE */
+
+function generateImage(){
+
+let userPrompt=prompt("Enter image prompt:");
+
+if(!userPrompt)return;
+
+let url =
+"https://image.pollinations.ai/prompt/" +
+encodeURIComponent(userPrompt);
+
+addMessage(`
+🖼 <b>${userPrompt}</b><br>
+<img src="${url}">
+`,"bot");
+}
+
+/* SMOOTH AUTO SCROLL */
+
+function smoothAutoScroll(){
+
+let chat = document.getElementById("chat");
+
+requestAnimationFrame(()=>{
+
+chat.scrollTo({
+top: chat.scrollHeight + 500,
+behavior: "smooth"
+});
+
+});
+}
+
+/* TYPE EFFECT */
+
+function typeEffect(text){
+
+let chat=document.getElementById("chat");
+
+let div=document.createElement("div");
+
+div.classList.add("message","bot");
+
+chat.appendChild(div);
+
+smoothAutoScroll();
+
+let i=0;
+
+let temp="";
+
+let interval=setInterval(()=>{
+
+temp += text[i] || "";
+
+div.innerHTML = marked.parse(temp);
+
+i++;
+
+smoothAutoScroll();
+
+if(i>=text.length){
+
+clearInterval(interval);
+
+smoothAutoScroll();
+
+updateCounter();
+}
+
+},15);
+}
+
+/* ADD MESSAGE */
+
+function addMessage(text,sender){
+
+let chat=document.getElementById("chat");
+
+let div=document.createElement("div");
+
+div.classList.add("message",sender);
+
+div.innerHTML = marked.parse(text);
+
+chat.appendChild(div);
+
+setTimeout(()=>{
+smoothAutoScroll();
+},50);
+}
+
+/* VOICE */
+
+function speak(text){
+
+try{
+
+window.speechSynthesis.cancel();
+
+let speech = new SpeechSynthesisUtterance(text);
+
+speech.lang="en-US";
+
+window.speechSynthesis.speak(speech);
+
+}catch(e){}
+}
+
+/* SPEECH */
+
+function startListening(){
+
+if(!('webkitSpeechRecognition' in window)){
+
+alert("Speech not supported!");
+
+return;
+}
+
+let recognition = new webkitSpeechRecognition();
+
+recognition.lang="en-US";
+
+recognition.start();
+
+recognition.onresult=function(event){
+
+document.getElementById("message").value =
+event.results[0][0].transcript;
+};
+}
+
+/* COUNTER */
+
+function updateCounter(){
+
+document.getElementById("counter").innerText =
+"Messages: " + currentChat.length;
+}
+
+</script>
+
+</body>
+</html>
