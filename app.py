@@ -9,11 +9,10 @@ app = Flask(__name__, template_folder="templates", static_folder="static")
 CORS(app)
 
 # ================= CONFIG =================
-XAI_API_KEY = os.environ.get("XAI_API_KEY")
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
-# ✅ WORKING MODEL
-MODEL = "grok-3"
+# ✅ GROK MODEL VIA OPENROUTER
+MODEL = "x-ai/grok-3"
 
 # ================= SAFE MATH =================
 operators = {
@@ -26,6 +25,7 @@ operators = {
 }
 
 def safe_eval(expr):
+
     try:
         node = ast.parse(expr, mode='eval').body
 
@@ -51,16 +51,18 @@ def safe_eval(expr):
 # ================= AI CHAT =================
 def ask_ai(msg):
 
-    if not XAI_API_KEY:
-        return "⚠️ Missing xAI API key"
+    if not OPENROUTER_API_KEY:
+        return "⚠️ Missing OpenRouter API key"
 
     try:
 
         res = requests.post(
-            "https://api.x.ai/v1/chat/completions",
+            "https://openrouter.ai/api/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {XAI_API_KEY}",
-                "Content-Type": "application/json"
+                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://lumina-7vwo.onrender.com",
+                "X-Title": "LuminaAI Ultra"
             },
             json={
                 "model": MODEL,
@@ -68,8 +70,8 @@ def ask_ai(msg):
                     {
                         "role": "system",
                         "content": (
-                            "You are LuminaAI Ultra, a smart AI assistant "
-                            "created by V_Velnexdo. "
+                            "You are LuminaAI Ultra, "
+                            "a smart AI assistant made by V_Velnexdo. "
                             "You help with coding, ideas, chatting, "
                             "problem solving and creativity."
                         )
@@ -85,9 +87,10 @@ def ask_ai(msg):
             timeout=60
         )
 
-        # DEBUG
+        # ================= DEBUG =================
         if res.status_code != 200:
-            print("xAI ERROR:")
+
+            print("OPENROUTER ERROR:")
             print(res.text)
 
             return f"⚠️ API Error: {res.status_code}"
@@ -97,14 +100,18 @@ def ask_ai(msg):
         return data["choices"][0]["message"]["content"]
 
     except Exception as e:
+
         print("AI ERROR:", e)
+
         return "⚠️ AI unavailable"
 
 # ================= IMAGE GENERATION =================
 def generate_image(prompt):
 
     if not OPENROUTER_API_KEY:
-        return {"error": "Missing OpenRouter API key"}
+        return {
+            "error": "Missing OpenRouter API key"
+        }
 
     try:
 
@@ -128,10 +135,13 @@ def generate_image(prompt):
         )
 
         if res.status_code != 200:
+
             print("IMAGE ERROR:")
             print(res.text)
 
-            return {"error": res.text}
+            return {
+                "error": res.text
+            }
 
         data = res.json()
 
@@ -147,6 +157,7 @@ def generate_image(prompt):
         }
 
     except Exception as e:
+
         print("IMAGE ERROR:", e)
 
         return {
@@ -173,7 +184,7 @@ def chat():
                 "reply": "Say something 😄"
             })
 
-        # Math support
+        # ================= MATH =================
         math = safe_eval(msg)
 
         if math is not None:
@@ -181,7 +192,7 @@ def chat():
                 "reply": f"Answer: {math}"
             })
 
-        # AI reply
+        # ================= AI =================
         reply = ask_ai(msg)
 
         return jsonify({
@@ -190,8 +201,8 @@ def chat():
             "mood": "smart",
             "suggestions": [
                 "Help me code",
-                "Tell me startup ideas",
                 "Explain AI",
+                "Tell me startup ideas",
                 "Make story"
             ]
         })
