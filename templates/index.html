@@ -1106,6 +1106,79 @@ event.results[0][0].transcript;
 };
 }
 
+/* SMOOTH AUTO SCROLL */
+
+function smoothAutoScroll(){
+
+let chat = document.getElementById("chat");
+
+chat.scrollTo({
+top: chat.scrollHeight,
+behavior: "smooth"
+});
+}
+
+/* TYPE EFFECT */
+
+function typeEffect(text){
+
+let chat=document.getElementById("chat");
+
+let div=document.createElement("div");
+
+div.classList.add("message","bot");
+
+chat.appendChild(div);
+
+smoothAutoScroll();
+
+let i=0;
+
+let temp="";
+
+let interval=setInterval(()=>{
+
+temp += text[i] || "";
+
+div.innerHTML = marked.parse(temp);
+
+i++;
+
+smoothAutoScroll();
+
+if(i>=text.length){
+
+clearInterval(interval);
+
+smoothAutoScroll();
+
+updateCounter();
+}
+
+},15);
+}
+
+/* ADD MESSAGE */
+
+function addMessage(text,sender){
+
+let chat=document.getElementById("chat");
+
+let div=document.createElement("div");
+
+div.classList.add("message",sender);
+
+div.innerHTML = marked.parse(text);
+
+chat.appendChild(div);
+
+requestAnimationFrame(()=>{
+
+smoothAutoScroll();
+
+});
+}
+
 /* COUNTER */
 
 function updateCounter(){
