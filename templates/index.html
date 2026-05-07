@@ -16,8 +16,12 @@ padding:0;
 box-sizing:border-box;
 }
 
+html,body{
+height:100%;
+overflow:hidden;
+}
+
 body.dark{
-margin:0;
 font-family:"Segoe UI";
 background:#343541;
 color:white;
@@ -27,7 +31,6 @@ overflow:hidden;
 }
 
 body.light{
-margin:0;
 font-family:"Segoe UI";
 background:white;
 color:black;
@@ -60,11 +63,14 @@ display:flex;
 flex-direction:column;
 z-index:2;
 animation:sidebarSlide .5s ease;
+overflow:hidden;
 }
 
 body.light .sidebar{
 background:#f1f1f1;
 }
+
+/* MAIN */
 
 .main{
 flex:1;
@@ -72,8 +78,11 @@ display:flex;
 flex-direction:column;
 position:relative;
 z-index:2;
+overflow:hidden;
 animation:mainFade .5s ease;
 }
+
+/* HEADER */
 
 .header{
 padding:15px;
@@ -82,21 +91,47 @@ font-size:24px;
 font-weight:bold;
 border-bottom:1px solid #444;
 animation:headerSlide .5s ease;
+flex-shrink:0;
 }
 
 .header span{
 color:#19c37d;
 }
 
+/* MOOD */
+
+#mood{
+text-align:center;
+font-size:12px;
+color:#aaa;
+padding:5px;
+flex-shrink:0;
+}
+
+/* CHAT CONTAINER */
+
+#chatContainer{
+flex:1;
+display:flex;
+flex-direction:column;
+overflow:hidden;
+position:relative;
+}
+
 /* CHAT */
 
 .chat-box{
 flex:1;
-overflow:auto;
+overflow-y:auto;
+overflow-x:hidden;
 padding:20px;
+padding-bottom:140px;
 display:none;
 scroll-behavior:smooth;
+height:100%;
 }
+
+/* MESSAGE */
 
 .message{
 max-width:800px;
@@ -106,6 +141,8 @@ border-radius:14px;
 opacity:0;
 transform:translateY(20px);
 animation:messagePop .35s ease forwards;
+word-wrap:break-word;
+overflow-wrap:break-word;
 }
 
 .user{
@@ -134,6 +171,10 @@ padding:10px;
 border-top:1px solid #444;
 gap:10px;
 animation:inputSlide .5s ease;
+flex-shrink:0;
+background:inherit;
+position:relative;
+z-index:5;
 }
 
 input{
@@ -224,6 +265,7 @@ background:#ccc;
 padding:10px;
 text-align:center;
 animation:suggestionsFade .5s ease;
+flex-shrink:0;
 }
 
 #suggestions button{
@@ -254,6 +296,7 @@ animation:imageFade .5s ease;
 display:none;
 text-align:center;
 padding:10px;
+flex-shrink:0;
 }
 
 .dot{
@@ -285,6 +328,7 @@ flex-direction:column;
 text-align:center;
 padding:30px;
 animation:welcomeFade .6s ease;
+overflow-y:auto;
 }
 
 .welcome-title{
@@ -351,11 +395,13 @@ opacity:.8;
 
 /* SCROLLBAR */
 
-.chat-box::-webkit-scrollbar{
+.chat-box::-webkit-scrollbar,
+.history::-webkit-scrollbar{
 width:8px;
 }
 
-.chat-box::-webkit-scrollbar-thumb{
+.chat-box::-webkit-scrollbar-thumb,
+.history::-webkit-scrollbar-thumb{
 background:#19c37d;
 border-radius:10px;
 }
@@ -513,6 +559,16 @@ font-size:30px;
 .quick-card{
 width:90%;
 }
+
+.input-area{
+gap:5px;
+padding:8px;
+}
+
+button{
+padding:9px;
+font-size:12px;
+}
 }
 
 </style>
@@ -542,11 +598,11 @@ width:90%;
 🤖 <span>LuminaAI Ultra</span>
 </div>
 
-<div id="mood" style="text-align:center;font-size:12px;color:#aaa;padding:5px;">
+<div id="mood">
 Mood: neutral
 </div>
 
-<div id="chatContainer" style="flex:1;display:flex;flex-direction:column;">
+<div id="chatContainer">
 
 <div id="welcomeScreen" class="welcome-screen">
 
@@ -656,11 +712,9 @@ chat.style.display = "none";
 
 }else{
 
-welcome.style.display = "block";
+welcome.style.display = "none";
 
 chat.style.display = "block";
-
-welcome.style.display = "none";
 }
 }
 
@@ -905,6 +959,8 @@ input.value="";
 
 document.getElementById("typing").style.display="block";
 
+smoothAutoScroll();
+
 fetch(API_URL + "/chat",{
 
 method:"POST",
@@ -1012,6 +1068,22 @@ addMessage(`
 `,"bot");
 }
 
+/* SMOOTH AUTO SCROLL */
+
+function smoothAutoScroll(){
+
+let chat = document.getElementById("chat");
+
+requestAnimationFrame(()=>{
+
+chat.scrollTo({
+top: chat.scrollHeight + 500,
+behavior: "smooth"
+});
+
+});
+}
+
 /* TYPE EFFECT */
 
 function typeEffect(text){
@@ -1023,6 +1095,8 @@ let div=document.createElement("div");
 div.classList.add("message","bot");
 
 chat.appendChild(div);
+
+smoothAutoScroll();
 
 let i=0;
 
@@ -1036,11 +1110,13 @@ div.innerHTML = marked.parse(temp);
 
 i++;
 
-chat.scrollTop = chat.scrollHeight;
+smoothAutoScroll();
 
 if(i>=text.length){
 
 clearInterval(interval);
+
+smoothAutoScroll();
 
 updateCounter();
 }
@@ -1062,7 +1138,9 @@ div.innerHTML = marked.parse(text);
 
 chat.appendChild(div);
 
-chat.scrollTop = chat.scrollHeight;
+setTimeout(()=>{
+smoothAutoScroll();
+},50);
 }
 
 /* VOICE */
@@ -1104,79 +1182,6 @@ recognition.onresult=function(event){
 document.getElementById("message").value =
 event.results[0][0].transcript;
 };
-}
-
-/* SMOOTH AUTO SCROLL */
-
-function smoothAutoScroll(){
-
-let chat = document.getElementById("chat");
-
-chat.scrollTo({
-top: chat.scrollHeight,
-behavior: "smooth"
-});
-}
-
-/* TYPE EFFECT */
-
-function typeEffect(text){
-
-let chat=document.getElementById("chat");
-
-let div=document.createElement("div");
-
-div.classList.add("message","bot");
-
-chat.appendChild(div);
-
-smoothAutoScroll();
-
-let i=0;
-
-let temp="";
-
-let interval=setInterval(()=>{
-
-temp += text[i] || "";
-
-div.innerHTML = marked.parse(temp);
-
-i++;
-
-smoothAutoScroll();
-
-if(i>=text.length){
-
-clearInterval(interval);
-
-smoothAutoScroll();
-
-updateCounter();
-}
-
-},15);
-}
-
-/* ADD MESSAGE */
-
-function addMessage(text,sender){
-
-let chat=document.getElementById("chat");
-
-let div=document.createElement("div");
-
-div.classList.add("message",sender);
-
-div.innerHTML = marked.parse(text);
-
-chat.appendChild(div);
-
-requestAnimationFrame(()=>{
-
-smoothAutoScroll();
-
-});
 }
 
 /* COUNTER */
