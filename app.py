@@ -93,9 +93,9 @@ Behavior rules:
                         }
                     ],
                     "temperature": 0.8,
-                    "max_tokens": 10000
+                    "max_tokens": 1000000
                 },
-                timeout=20
+                timeout=9
             )
 
             if res.status_code != 200:
