@@ -45,7 +45,7 @@ def ask_ai(message):
                     {"role": "user", "content": message}
                 ],
                 "temperature": 0.7,
-                "max_tokens": 2000
+                "max_tokens": 615
             },
             timeout=20
         )
