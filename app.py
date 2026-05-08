@@ -93,7 +93,7 @@ Behavior rules:
                         }
                     ],
                     "temperature": 0.8,
-                    "max_tokens": 700
+                    "max_tokens": 10000
                 },
                 timeout=20
             )
