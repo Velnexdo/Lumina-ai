@@ -8,12 +8,15 @@ CORS(app)
 # ================= CONFIG =================
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
-AI_NAME = "LuminaAI"
+AI_NAME = "Lumina AI"
 
 MODELS = [
+    "openai/gpt-chat-latest",
     "mistralai/mistral-7b-instruct",
     "meta-llama/llama-3-8b-instruct"
 ]
+
+session = requests.Session()
 
 # ================= SAFE MATH =================
 operators = {
@@ -30,26 +33,33 @@ def safe_eval(expr):
         def eval_node(n):
             if isinstance(n, ast.Constant):
                 return n.value
+
             elif isinstance(n, ast.BinOp):
-                return operators[type(n.op)](
-                    eval_node(n.left),
-                    eval_node(n.right)
-                )
+                left = eval_node(n.left)
+                right = eval_node(n.right)
+                op_type = type(n.op)
+                return operators[op_type](left, right)
+
+            return None
 
         return eval_node(node)
+
     except:
         return None
+
 
 # ================= AI CORE =================
 def ask_ai(msg):
 
     if not OPENROUTER_API_KEY:
-        return "⚠️ Missing API key in Render Environment Variables"
+        return "⚠️ Missing OPENROUTER_API_KEY in environment variables"
 
     for model in MODELS:
         try:
-            res = requests.post(
-                "https://openrouter.ai",
+            print(f"[TRYING MODEL] {model}")
+
+            res = session.post(
+                "https://openrouter.ai/api/v1/chat/completions",
                 headers={
                     "Authorization": f"Bearer {OPENROUTER_API_KEY}",
                     "Content-Type": "application/json",
@@ -62,28 +72,34 @@ def ask_ai(msg):
                         {
                             "role": "system",
                             "content": f"""
-You are Lumina AI, a friendly AI assistant and a helpful AI friend.
+You are {AI_NAME}, a friendly AI assistant created by Velnexdo.
 
 Personality:
-- You are like a smart best friend
-- You talk in simple, natural human language
-- You are helpful, fun, and supportive
-- You know your name is {AI_NAME} and you can say it naturally in conversation
-- You NEVER say you're just a model unless asked
-- You behave like a real chat companion
+- Act like a smart, chill best friend
+- Talk naturally like a human chat companion
+- Be helpful, clear, and slightly fun
+- Never say you are just a model unless asked
+- Keep responses simple and natural
 
-Always respond naturally like a friend talking.
+Behavior rules:
+- Understand user intent properly
+- Give practical answers
+- Avoid unnecessary long explanations unless asked
 """
                         },
-                        {"role": "user", "content": msg}
+                        {
+                            "role": "user",
+                            "content": msg
+                        }
                     ],
-                    "max_tokens": 700,
-                    "temperature": 0.8
+                    "temperature": 0.8,
+                    "max_tokens": 700
                 },
                 timeout=20
             )
 
             if res.status_code != 200:
+                print(f"[FAILED] {model} -> {res.text}")
                 continue
 
             data = res.json()
@@ -91,15 +107,18 @@ Always respond naturally like a friend talking.
             if data.get("choices"):
                 return data["choices"][0]["message"]["content"]
 
-        except:
+        except Exception as e:
+            print(f"[ERROR MODEL] {model} -> {e}")
             continue
 
     return "⚠️ AI temporarily unavailable"
+
 
 # ================= ROUTES =================
 @app.route("/")
 def home():
     return render_template("index.html")
+
 
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -109,19 +128,19 @@ def chat():
         if not msg:
             return jsonify({"reply": "Hey 😄 kya soch rahe ho?"})
 
-        # simple math support
+        # math support
         math = safe_eval(msg)
         if math is not None:
             return jsonify({"reply": f"Answer: {math}"})
 
-        # AI response
         reply = ask_ai(msg)
 
         return jsonify({"reply": reply})
 
     except Exception as e:
-        print("ERROR:", e)
+        print("SERVER ERROR:", e)
         return jsonify({"reply": "Server error ⚠️"}), 500
+
 
 # ================= RUN =================
 if __name__ == "__main__":
