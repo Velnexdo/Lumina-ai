@@ -670,24 +670,298 @@ Powered by LuminaAI Ultra ✨
 
 <script>
 
-/* KEEP ALL YOUR ORIGINAL JS */
+let typingSoundCooldown = false;
+let currentMood = "neutral";
 
-/* ONLY THIS IMAGE FUNCTION CHANGED */
+const API_URL = window.location.origin;
 
-async function generateImage(){
+let chats = JSON.parse(localStorage.getItem("chats") || "[]");
 
-let userPrompt = prompt("Enter image prompt:");
+let currentChat = [];
 
-if(!userPrompt) return;
+/* INIT */
 
-addMessage(`
-🎨 <b>Generating image...</b><br>
-${userPrompt}
-`, "bot");
+function initApp(){
 
-try{
+loadTheme();
 
-let res = await fetch(API_URL + "/image", {
+showSuggestions();
+
+updateStatus();
+
+renderHistory();
+
+updateCounter();
+
+updateWelcomeScreen();
+}
+
+/* WELCOME SCREEN */
+
+function updateWelcomeScreen(){
+
+let welcome = document.getElementById("welcomeScreen");
+
+let chat = document.getElementById("chat");
+
+if(currentChat.length === 0){
+
+welcome.style.display = "flex";
+
+chat.style.display = "none";
+
+}else{
+
+welcome.style.display = "none";
+
+chat.style.display = "block";
+}
+}
+
+/* AUTO SEND */
+
+function setPrompt(text){
+
+document.getElementById("message").value = text;
+
+sendMessage();
+}
+
+/* THEME */
+
+function toggleTheme(){
+
+let theme = localStorage.getItem("theme") || "dark";
+
+if(theme==="dark"){
+
+document.body.classList.replace("dark","light");
+
+localStorage.setItem("theme","light");
+
+}else{
+
+document.body.classList.replace("light","dark");
+
+localStorage.setItem("theme","dark");
+}
+}
+
+function loadTheme(){
+
+let theme = localStorage.getItem("theme") || "dark";
+
+document.body.classList.add(theme);
+}
+
+/* SOUND */
+
+function playTypingSound(){
+
+if(typingSoundCooldown) return;
+
+typingSoundCooldown = true;
+
+let audio = new Audio("https://www.soundjay.com/button/sounds/button-16.mp3");
+
+audio.volume = 0.1;
+
+audio.play().catch(()=>{});
+
+setTimeout(()=>{
+typingSoundCooldown=false;
+},120);
+}
+
+/* PAYMENT */
+
+function startPayment(){
+
+var options = {
+
+"key":"rzp_live_SfMTVjtUvKYFIM",
+
+"amount":9900,
+
+"currency":"INR",
+
+"name":"LuminaAI Ultra",
+
+"description":"Purchase",
+
+"handler":function(response){
+
+alert("✅ Payment Successful!");
+},
+
+"theme":{"color":"#19c37d"}
+};
+
+var rzp = new Razorpay(options);
+
+rzp.open();
+}
+
+/* STATUS */
+
+function updateStatus(){
+
+let s = document.getElementById("status");
+
+s.innerText = navigator.onLine
+? "🟢 Online | Mood: " + currentMood
+: "🔴 Offline";
+}
+
+window.addEventListener("online",updateStatus);
+
+window.addEventListener("offline",updateStatus);
+
+/* SUGGESTIONS */
+
+function showSuggestions(){
+
+let box = document.getElementById("suggestions");
+
+box.innerHTML="";
+
+[
+"Hi",
+"What is AI?",
+"Tell me a joke",
+"Explain planet",
+"Write Roblox Script"
+]
+.forEach(s=>{
+
+let b=document.createElement("button");
+
+b.innerText=s;
+
+b.onclick=()=>{
+
+document.getElementById("message").value=s;
+
+sendMessage();
+};
+
+box.appendChild(b);
+});
+}
+
+/* SAVE */
+
+function save(){
+
+localStorage.setItem("chats",JSON.stringify(chats));
+
+updateCounter();
+}
+
+/* NEW CHAT */
+
+function newChat(){
+
+if(currentChat.length>0){
+
+chats.push(currentChat);
+
+save();
+}
+
+currentChat=[];
+
+document.getElementById("chat").innerHTML="";
+
+renderHistory();
+
+updateWelcomeScreen();
+}
+
+/* CLEAR */
+
+function clearChat(){
+
+currentChat=[];
+
+document.getElementById("chat").innerHTML="";
+
+save();
+
+updateWelcomeScreen();
+}
+
+/* HISTORY */
+
+function renderHistory(){
+
+let h=document.getElementById("history");
+
+h.innerHTML="";
+
+chats.forEach((c,i)=>{
+
+let d=document.createElement("div");
+
+d.innerText="Chat "+(i+1);
+
+d.onclick=()=>loadChat(i);
+
+h.appendChild(d);
+});
+}
+
+function loadChat(i){
+
+currentChat=chats[i];
+
+document.getElementById("chat").innerHTML="";
+
+currentChat.forEach(m=>addMessage(m.text,m.sender));
+
+updateWelcomeScreen();
+}
+
+/* ENTER SEND */
+
+document.addEventListener("keypress",function(e){
+
+if(e.key==="Enter"){
+
+e.preventDefault();
+
+sendMessage();
+}
+});
+
+/* SEND */
+
+function sendMessage(){
+
+let input=document.getElementById("message");
+
+let msg=input.value.trim();
+
+if(!msg) return;
+
+addMessage(msg,"user");
+
+currentChat.push({
+text:msg,
+sender:"user"
+});
+
+updateWelcomeScreen();
+
+save();
+
+input.value="";
+
+document.getElementById("typing").style.display="block";
+
+smoothAutoScroll();
+
+fetch(API_URL + "/chat",{
 
 method:"POST",
 
@@ -696,41 +970,232 @@ headers:{
 },
 
 body:JSON.stringify({
-prompt:userPrompt
+message:msg
+})
+})
+.then(res=>res.json())
+
+.then(data=>{
+
+currentMood=data.mood || "neutral";
+
+document.getElementById("mood").innerText =
+"Mood: " + currentMood;
+
+updateSuggestions(data.suggestions);
+
+setTimeout(()=>{
+
+document.getElementById("typing").style.display="none";
+
+handleBotReply(data.reply || "...");
+
+},500);
 })
 
+.catch(err=>{
+
+document.getElementById("typing").style.display="none";
+
+handleBotReply("⚠ Server error");
+});
+}
+
+/* UPDATE SUGGESTIONS */
+
+function updateSuggestions(list){
+
+if(!list) return;
+
+let box=document.getElementById("suggestions");
+
+box.innerHTML="";
+
+list.forEach(s=>{
+
+let b=document.createElement("button");
+
+b.innerText=s;
+
+b.onclick=()=>{
+
+document.getElementById("message").value=s;
+
+sendMessage();
+};
+
+box.appendChild(b);
+});
+}
+
+/* BOT REPLY */
+
+function handleBotReply(text){
+
+let delay=Math.random()*500+300;
+
+setTimeout(()=>{
+
+typeEffect(text);
+
+currentChat.push({
+text:text,
+sender:"bot"
 });
 
-let data = await res.json();
+save();
 
-if(data.image){
+speak(text);
 
-addMessage(`
+},delay);
+}
+
+/* IMAGE */
+
+function generateImage(){
+
+let userPrompt=prompt("Enter image prompt:");
+
+if(!userPrompt)return;
+
+let url =
+"https://image.pollinations.ai/prompt/" +
+encodeURIComponent(userPrompt);
+
+addMessage(
 🖼 <b>${userPrompt}</b><br>
-<img src="${data.image}">
-`, "bot");
-
-}else{
-
-addMessage(`
-⚠ <b>Image generation failed</b><br>
-${data.error || "Unknown error"}
-`, "bot");
-
+<img src="${url}">
+,"bot");
 }
 
-}catch(err){
+/* SMOOTH AUTO SCROLL */
 
-addMessage(`
-⚠ <b>Server Error</b><br>
-Could not generate image.
-`, "bot");
+function smoothAutoScroll(){
 
+let chat = document.getElementById("chat");
+
+requestAnimationFrame(()=>{
+
+chat.scrollTo({
+top: chat.scrollHeight + 500,
+behavior: "smooth"
+});
+
+});
 }
 
+/* TYPE EFFECT */
+
+function typeEffect(text){
+
+let chat=document.getElementById("chat");
+
+let div=document.createElement("div");
+
+div.classList.add("message","bot");
+
+chat.appendChild(div);
+
+smoothAutoScroll();
+
+let i=0;
+
+let temp="";
+
+let interval=setInterval(()=>{
+
+temp += text[i] || "";
+
+div.innerHTML = marked.parse(temp);
+
+i++;
+
+smoothAutoScroll();
+
+if(i>=text.length){
+
+clearInterval(interval);
+
+smoothAutoScroll();
+
+updateCounter();
+}
+
+},15);
+}
+
+/* ADD MESSAGE */
+
+function addMessage(text,sender){
+
+let chat=document.getElementById("chat");
+
+let div=document.createElement("div");
+
+div.classList.add("message",sender);
+
+div.innerHTML = marked.parse(text);
+
+chat.appendChild(div);
+
+setTimeout(()=>{
+smoothAutoScroll();
+},50);
+}
+
+/* VOICE */
+
+function speak(text){
+
+try{
+
+window.speechSynthesis.cancel();
+
+let speech = new SpeechSynthesisUtterance(text);
+
+speech.lang="en-US";
+
+window.speechSynthesis.speak(speech);
+
+}catch(e){}
+}
+
+/* SPEECH */
+
+function startListening(){
+
+if(!('webkitSpeechRecognition' in window)){
+
+alert("Speech not supported!");
+
+return;
+}
+
+let recognition = new webkitSpeechRecognition();
+
+recognition.lang="en-US";
+
+recognition.start();
+
+recognition.onresult=function(event){
+
+document.getElementById("message").value =
+event.results[0][0].transcript;
+};
+}
+
+/* COUNTER */
+
+function updateCounter(){
+
+document.getElementById("counter").innerText =
+"Messages: " + currentChat.length;
 }
 
 </script>
 
 </body>
 </html>
+
+
+full script do pls
