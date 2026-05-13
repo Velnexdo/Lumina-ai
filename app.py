@@ -53,13 +53,21 @@ def ask_ai(message):
             headers={
                 "Authorization": f"Bearer {CHAT_API_KEY}",
                 "Content-Type": "application/json",
-                "HTTP-Referer": "https://render.com",
+
+                # IMPORTANT
+                "HTTP-Referer": "https://luminaai.onrender.com",
+
                 "X-Title": APP_NAME
             },
 
             json={
 
                 "model": CHAT_MODEL,
+
+                # ✅ PROVIDER FALLBACKS
+                "provider": {
+                    "allow_fallbacks": True
+                },
 
                 "messages": [
 
@@ -95,19 +103,35 @@ Rules:
         print("CHAT STATUS:", response.status_code)
         print("CHAT RAW:", response.text)
 
-        data = response.json()
+        # ✅ STATUS CHECK
+        if response.status_code != 200:
+            return f"⚠️ API Error {response.status_code}: {response.text}"
 
-        # SUCCESS
+        # ✅ SAFE JSON
+        try:
+            data = response.json()
+        except Exception:
+            return f"⚠️ Invalid JSON Response:\n{response.text}"
+
+        # ✅ SUCCESS
         if "choices" in data and len(data["choices"]) > 0:
-            return data["choices"][0]["message"]["content"]
 
-        # API ERROR
+            content = data["choices"][0]["message"]["content"]
+
+            if content:
+                return content
+
+        # ✅ API ERROR
         if "error" in data:
+
             return f"⚠️ {data['error'].get('message', 'Unknown API error')}"
 
         return f"⚠️ Invalid response: {data}"
 
     except Exception as e:
+
+        print("CHAT EXCEPTION:", str(e))
+
         return f"⚠️ Chat Error: {str(e)}"
 
 
@@ -128,7 +152,7 @@ def generate_image(prompt):
             headers={
                 "Authorization": f"Bearer {IMAGE_API_KEY}",
                 "Content-Type": "application/json",
-                "HTTP-Referer": "https://render.com",
+                "HTTP-Referer": "https://luminaai.onrender.com",
                 "X-Title": APP_NAME
             },
 
@@ -144,15 +168,24 @@ def generate_image(prompt):
         print("IMAGE STATUS:", response.status_code)
         print("IMAGE RAW:", response.text)
 
-        data = response.json()
+        if response.status_code != 200:
+            return None
+
+        try:
+            data = response.json()
+        except Exception:
+            return None
 
         if "data" in data and len(data["data"]) > 0:
+
             return data["data"][0].get("url")
 
         return None
 
     except Exception as e:
+
         print("IMAGE ERROR:", e)
+
         return None
 
 
@@ -162,6 +195,7 @@ def generate_image(prompt):
 
 @app.route("/")
 def home():
+
     return render_template("index.html")
 
 
@@ -172,20 +206,38 @@ def home():
 @app.route("/chat", methods=["POST"])
 def chat():
 
-    data = request.get_json(force=True)
+    try:
 
-    msg = data.get("message", "").strip()
+        data = request.get_json(force=True)
 
-    if not msg:
+        msg = data.get("message", "").strip()
+
+        if not msg:
+
+            return jsonify({
+                "reply": "Kuch likho 😄"
+            })
+
+        reply = ask_ai(msg)
+
         return jsonify({
-            "reply": "Kuch likho 😄"
+            "reply": reply,
+            "mood": "happy",
+            "suggestions": [
+                "Tell me more",
+                "Explain simply",
+                "Write code",
+                "Give example"
+            ]
         })
 
-    reply = ask_ai(msg)
+    except Exception as e:
 
-    return jsonify({
-        "reply": reply
-    })
+        print("CHAT ROUTE ERROR:", str(e))
+
+        return jsonify({
+            "reply": f"⚠️ Server Error: {str(e)}"
+        })
 
 
 # ==================================================
@@ -195,25 +247,37 @@ def chat():
 @app.route("/image", methods=["POST"])
 def image():
 
-    data = request.get_json(force=True)
+    try:
 
-    prompt = data.get("prompt", "").strip()
+        data = request.get_json(force=True)
 
-    if not prompt:
+        prompt = data.get("prompt", "").strip()
+
+        if not prompt:
+
+            return jsonify({
+                "error": "Prompt missing"
+            }), 400
+
+        image_url = generate_image(prompt)
+
+        if not image_url:
+
+            return jsonify({
+                "error": "Image generation failed"
+            }), 500
+
         return jsonify({
-            "error": "Prompt missing"
-        }), 400
+            "image": image_url
+        })
 
-    image_url = generate_image(prompt)
+    except Exception as e:
 
-    if not image_url:
+        print("IMAGE ROUTE ERROR:", str(e))
+
         return jsonify({
-            "error": "Image generation failed"
+            "error": str(e)
         }), 500
-
-    return jsonify({
-        "image": image_url
-    })
 
 
 # ==================================================
