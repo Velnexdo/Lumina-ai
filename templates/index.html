@@ -39,8 +39,6 @@ height:100vh;
 overflow:hidden;
 }
 
-/* 🌌 Animated Background */
-
 body::before{
 content:"";
 position:fixed;
@@ -52,8 +50,6 @@ pointer-events:none;
 z-index:0;
 animation:bgMove 8s infinite alternate ease-in-out;
 }
-
-/* SIDEBAR */
 
 .sidebar{
 width:260px;
@@ -70,8 +66,6 @@ body.light .sidebar{
 background:#f1f1f1;
 }
 
-/* MAIN */
-
 .main{
 flex:1;
 display:flex;
@@ -81,8 +75,6 @@ z-index:2;
 overflow:hidden;
 animation:mainFade .5s ease;
 }
-
-/* HEADER */
 
 .header{
 padding:15px;
@@ -98,8 +90,6 @@ flex-shrink:0;
 color:#19c37d;
 }
 
-/* MOOD */
-
 #mood{
 text-align:center;
 font-size:12px;
@@ -108,8 +98,6 @@ padding:5px;
 flex-shrink:0;
 }
 
-/* CHAT CONTAINER */
-
 #chatContainer{
 flex:1;
 display:flex;
@@ -117,8 +105,6 @@ flex-direction:column;
 overflow:hidden;
 position:relative;
 }
-
-/* CHAT */
 
 .chat-box{
 flex:1;
@@ -130,8 +116,6 @@ display:none;
 scroll-behavior:smooth;
 height:100%;
 }
-
-/* MESSAGE */
 
 .message{
 max-width:800px;
@@ -163,8 +147,6 @@ body.light .bot{
 background:#eee;
 }
 
-/* INPUT */
-
 .input-area{
 display:flex;
 padding:10px;
@@ -191,8 +173,6 @@ outline:none;
 box-shadow:0 0 12px rgba(25,195,125,0.4);
 }
 
-/* BUTTON */
-
 button{
 padding:10px 14px;
 border:none;
@@ -209,26 +189,6 @@ button:hover{
 transform:translateY(-2px);
 box-shadow:0 4px 15px rgba(25,195,125,0.35);
 }
-
-button::after{
-content:"";
-position:absolute;
-top:50%;
-left:50%;
-width:0;
-height:0;
-background:rgba(255,255,255,0.25);
-border-radius:50%;
-transform:translate(-50%,-50%);
-transition:.6s;
-}
-
-button:active::after{
-width:220px;
-height:220px;
-}
-
-/* HISTORY */
 
 .history{
 flex:1;
@@ -259,8 +219,6 @@ body.light .history div:hover{
 background:#ccc;
 }
 
-/* SUGGESTIONS */
-
 #suggestions{
 padding:10px;
 text-align:center;
@@ -273,15 +231,11 @@ margin:5px;
 background:#555;
 }
 
-/* STATUS */
-
 .status,.counter{
 font-size:12px;
 text-align:center;
 margin-top:5px;
 }
-
-/* IMAGE */
 
 img{
 max-width:100%;
@@ -289,8 +243,6 @@ border-radius:10px;
 margin-top:10px;
 animation:imageFade .5s ease;
 }
-
-/* TYPING */
 
 .typing{
 display:none;
@@ -316,8 +268,6 @@ animation-delay:.2s;
 .dot:nth-child(3){
 animation-delay:.4s;
 }
-
-/* WELCOME SCREEN */
 
 .welcome-screen{
 flex:1;
@@ -393,8 +343,6 @@ font-size:13px;
 opacity:.8;
 }
 
-/* SCROLLBAR */
-
 .chat-box::-webkit-scrollbar,
 .history::-webkit-scrollbar{
 width:8px;
@@ -405,8 +353,6 @@ width:8px;
 background:#19c37d;
 border-radius:10px;
 }
-
-/* ANIMATIONS */
 
 @keyframes blink{
 0%{opacity:.2;}
@@ -694,6 +640,7 @@ renderHistory();
 updateCounter();
 
 updateWelcomeScreen();
+
 }
 
 /* WELCOME SCREEN */
@@ -715,7 +662,9 @@ chat.style.display = "none";
 welcome.style.display = "none";
 
 chat.style.display = "block";
+
 }
+
 }
 
 /* AUTO SEND */
@@ -725,6 +674,7 @@ function setPrompt(text){
 document.getElementById("message").value = text;
 
 sendMessage();
+
 }
 
 /* THEME */
@@ -735,23 +685,29 @@ let theme = localStorage.getItem("theme") || "dark";
 
 if(theme==="dark"){
 
-document.body.classList.replace("dark","light");
+document.body.classList.remove("dark","light");
+document.body.classList.add("light");
 
 localStorage.setItem("theme","light");
 
 }else{
 
-document.body.classList.replace("light","dark");
+document.body.classList.remove("dark","light");
+document.body.classList.add("dark");
 
 localStorage.setItem("theme","dark");
+
 }
+
 }
 
 function loadTheme(){
 
 let theme = localStorage.getItem("theme") || "dark";
 
+document.body.classList.remove("dark","light");
 document.body.classList.add(theme);
+
 }
 
 /* SOUND */
@@ -771,6 +727,7 @@ audio.play().catch(()=>{});
 setTimeout(()=>{
 typingSoundCooldown=false;
 },120);
+
 }
 
 /* PAYMENT */
@@ -792,14 +749,17 @@ var options = {
 "handler":function(response){
 
 alert("✅ Payment Successful!");
+
 },
 
 "theme":{"color":"#19c37d"}
+
 };
 
 var rzp = new Razorpay(options);
 
 rzp.open();
+
 }
 
 /* STATUS */
@@ -811,6 +771,7 @@ let s = document.getElementById("status");
 s.innerText = navigator.onLine
 ? "🟢 Online | Mood: " + currentMood
 : "🔴 Offline";
+
 }
 
 window.addEventListener("online",updateStatus);
@@ -843,10 +804,13 @@ b.onclick=()=>{
 document.getElementById("message").value=s;
 
 sendMessage();
+
 };
 
 box.appendChild(b);
+
 });
+
 }
 
 /* SAVE */
@@ -856,6 +820,7 @@ function save(){
 localStorage.setItem("chats",JSON.stringify(chats));
 
 updateCounter();
+
 }
 
 /* NEW CHAT */
@@ -867,6 +832,7 @@ if(currentChat.length>0){
 chats.push(currentChat);
 
 save();
+
 }
 
 currentChat=[];
@@ -876,6 +842,7 @@ document.getElementById("chat").innerHTML="";
 renderHistory();
 
 updateWelcomeScreen();
+
 }
 
 /* CLEAR */
@@ -889,6 +856,7 @@ document.getElementById("chat").innerHTML="";
 save();
 
 updateWelcomeScreen();
+
 }
 
 /* HISTORY */
@@ -908,7 +876,9 @@ d.innerText="Chat "+(i+1);
 d.onclick=()=>loadChat(i);
 
 h.appendChild(d);
+
 });
+
 }
 
 function loadChat(i){
@@ -920,6 +890,7 @@ document.getElementById("chat").innerHTML="";
 currentChat.forEach(m=>addMessage(m.text,m.sender));
 
 updateWelcomeScreen();
+
 }
 
 /* ENTER SEND */
@@ -931,7 +902,9 @@ if(e.key==="Enter"){
 e.preventDefault();
 
 sendMessage();
+
 }
+
 });
 
 /* SEND */
@@ -972,6 +945,7 @@ headers:{
 body:JSON.stringify({
 message:msg
 })
+
 })
 .then(res=>res.json())
 
@@ -991,14 +965,19 @@ document.getElementById("typing").style.display="none";
 handleBotReply(data.reply || "...");
 
 },500);
+
 })
 
 .catch(err=>{
 
 document.getElementById("typing").style.display="none";
 
-handleBotReply("⚠ Server error");
+handleBotReply("⚠ Server error or backend not running");
+
+console.error(err);
+
 });
+
 }
 
 /* UPDATE SUGGESTIONS */
@@ -1022,10 +1001,13 @@ b.onclick=()=>{
 document.getElementById("message").value=s;
 
 sendMessage();
+
 };
 
 box.appendChild(b);
+
 });
+
 }
 
 /* BOT REPLY */
@@ -1048,6 +1030,7 @@ save();
 speak(text);
 
 },delay);
+
 }
 
 /* IMAGE */
@@ -1062,10 +1045,11 @@ let url =
 "https://image.pollinations.ai/prompt/" +
 encodeURIComponent(userPrompt);
 
-addMessage(
+addMessage(`
 🖼 <b>${userPrompt}</b><br>
 <img src="${url}">
-,"bot");
+`,"bot");
+
 }
 
 /* SMOOTH AUTO SCROLL */
@@ -1082,6 +1066,7 @@ behavior: "smooth"
 });
 
 });
+
 }
 
 /* TYPE EFFECT */
@@ -1119,9 +1104,11 @@ clearInterval(interval);
 smoothAutoScroll();
 
 updateCounter();
+
 }
 
 },15);
+
 }
 
 /* ADD MESSAGE */
@@ -1141,6 +1128,7 @@ chat.appendChild(div);
 setTimeout(()=>{
 smoothAutoScroll();
 },50);
+
 }
 
 /* VOICE */
@@ -1158,6 +1146,7 @@ speech.lang="en-US";
 window.speechSynthesis.speak(speech);
 
 }catch(e){}
+
 }
 
 /* SPEECH */
@@ -1169,6 +1158,7 @@ if(!('webkitSpeechRecognition' in window)){
 alert("Speech not supported!");
 
 return;
+
 }
 
 let recognition = new webkitSpeechRecognition();
@@ -1181,7 +1171,9 @@ recognition.onresult=function(event){
 
 document.getElementById("message").value =
 event.results[0][0].transcript;
+
 };
+
 }
 
 /* COUNTER */
@@ -1190,6 +1182,7 @@ function updateCounter(){
 
 document.getElementById("counter").innerText =
 "Messages: " + currentChat.length;
+
 }
 
 </script>
