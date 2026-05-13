@@ -93,7 +93,7 @@ Rules:
                 ],
 
                 "temperature": 0.8,
-                "max_tokens": 700
+                "max_tokens": 4096
 
             },
 
