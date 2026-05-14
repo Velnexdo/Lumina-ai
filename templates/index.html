@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>LuminaAI Ultra</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
@@ -14,6 +14,7 @@
 margin:0;
 padding:0;
 box-sizing:border-box;
+-webkit-tap-highlight-color:transparent;
 }
 
 html,body{
@@ -26,7 +27,7 @@ font-family:"Segoe UI";
 background:#343541;
 color:white;
 display:flex;
-height:100vh;
+height:100dvh;
 overflow:hidden;
 }
 
@@ -35,7 +36,7 @@ font-family:"Segoe UI";
 background:white;
 color:black;
 display:flex;
-height:100vh;
+height:100dvh;
 overflow:hidden;
 }
 
@@ -115,6 +116,7 @@ padding-bottom:140px;
 display:none;
 scroll-behavior:smooth;
 height:100%;
+-webkit-overflow-scrolling:touch;
 }
 
 .message{
@@ -127,6 +129,7 @@ transform:translateY(20px);
 animation:messagePop .35s ease forwards;
 word-wrap:break-word;
 overflow-wrap:break-word;
+line-height:1.5;
 }
 
 .user{
@@ -166,6 +169,7 @@ border:none;
 border-radius:10px;
 font-size:15px;
 transition:.3s;
+min-width:0;
 }
 
 input:focus{
@@ -183,6 +187,7 @@ cursor:pointer;
 transition:.25s;
 position:relative;
 overflow:hidden;
+touch-action:manipulation;
 }
 
 button:hover{
@@ -242,6 +247,7 @@ max-width:100%;
 border-radius:10px;
 margin-top:10px;
 animation:imageFade .5s ease;
+height:auto;
 }
 
 .typing{
@@ -346,6 +352,7 @@ opacity:.8;
 .chat-box::-webkit-scrollbar,
 .history::-webkit-scrollbar{
 width:8px;
+height:5px;
 }
 
 .chat-box::-webkit-scrollbar-thumb,
@@ -478,43 +485,207 @@ transform:translateY(0);
 }
 }
 
-@media(max-width:700px){
+/* MOBILE SUPPORT */
+
+@media(max-width:900px){
+
+body{
+flex-direction:column;
+height:100dvh;
+overflow:hidden;
+}
 
 .sidebar{
-width:85px;
+width:100%;
+height:auto;
+flex-direction:row;
+align-items:center;
+gap:8px;
+padding:8px;
+overflow-x:auto;
+overflow-y:hidden;
+border-bottom:1px solid #444;
 }
 
 .sidebar button{
-font-size:11px;
-padding:8px;
+flex-shrink:0;
+min-width:45px;
+font-size:14px;
+padding:10px;
+}
+
+.history{
+display:flex;
+flex-direction:row;
+gap:8px;
+margin-top:0;
+overflow-x:auto;
+overflow-y:hidden;
+max-width:100%;
+}
+
+.history div{
+white-space:nowrap;
+margin-bottom:0;
+padding:8px 12px;
+font-size:12px;
+}
+
+.main{
+width:100%;
+height:100%;
+overflow:hidden;
 }
 
 .header{
-font-size:17px;
+font-size:18px;
+padding:12px;
+}
+
+#mood{
+font-size:11px;
+padding:4px;
+}
+
+.chat-box{
+padding:12px;
+padding-bottom:180px;
 }
 
 .message{
-max-width:95%;
+max-width:100%;
 font-size:14px;
+padding:12px;
+border-radius:12px;
+}
+
+.welcome-screen{
+padding:20px 12px;
+justify-content:flex-start;
+padding-top:40px;
 }
 
 .welcome-title{
 font-size:30px;
+line-height:1.2;
+}
+
+.welcome-sub{
+font-size:14px;
+}
+
+.quick-grid{
+flex-direction:column;
+width:100%;
+align-items:center;
 }
 
 .quick-card{
-width:90%;
+width:100%;
+max-width:100%;
+padding:14px;
 }
 
 .input-area{
-gap:5px;
-padding:8px;
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+padding:10px;
+background:#343541;
+backdrop-filter:blur(10px);
+z-index:999;
+display:flex;
+align-items:center;
+gap:6px;
+border-top:1px solid #444;
 }
 
-button{
-padding:9px;
+body.light .input-area{
+background:white;
+}
+
+.input-area input{
+height:45px;
+font-size:15px;
+min-width:0;
+}
+
+.input-area button{
+height:45px;
+padding:0 12px;
+font-size:13px;
+flex-shrink:0;
+}
+
+#suggestions{
+display:flex;
+overflow-x:auto;
+gap:8px;
+padding:10px;
+white-space:nowrap;
+text-align:left;
+}
+
+#suggestions button{
+flex-shrink:0;
+font-size:12px;
+padding:8px 12px;
+margin:0;
+}
+
+.typing{
+padding-bottom:75px;
+}
+
+.status,.counter{
+white-space:nowrap;
+font-size:11px;
+}
+
+}
+
+/* EXTRA SMALL PHONES */
+
+@media(max-width:480px){
+
+.header{
+font-size:16px;
+}
+
+.welcome-title{
+font-size:24px;
+}
+
+.welcome-sub{
+font-size:13px;
+}
+
+.message{
+font-size:13px;
+padding:10px;
+}
+
+.input-area{
+padding:8px;
+gap:5px;
+}
+
+.input-area button{
+padding:0 10px;
 font-size:12px;
 }
+
+input{
+padding:10px;
+font-size:14px;
+}
+
+.sidebar button{
+min-width:40px;
+font-size:12px;
+}
+
 }
 
 </style>
