@@ -25,7 +25,7 @@ if not IMAGE_API_KEY:
 # ==================================================
 
 # 💬 DEEPSEEK CHAT MODEL
-CHAT_MODEL = "deepseek/deepseek-v4-flash:free"
+CHAT_MODEL = "deepseek/deepseek-chat-v3-0324:free"
 
 # 🎨 IMAGE MODEL
 IMAGE_MODEL = "recraft/recraft-v4-pro"
