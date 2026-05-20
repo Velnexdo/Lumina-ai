@@ -24,8 +24,8 @@ if not IMAGE_API_KEY:
 # MODELS
 # ==================================================
 
-# 💬 CHAT MODEL
-CHAT_MODEL = "inclusionai/ring-2.6-1t:free"
+# 💬 DEEPSEEK CHAT MODEL
+CHAT_MODEL = "deepseek/deepseek-v4-flash:free"
 
 # 🎨 IMAGE MODEL
 IMAGE_MODEL = "recraft/recraft-v4-pro"
@@ -74,7 +74,7 @@ def ask_ai(message):
                     {
                         "role": "system",
                         "content": f"""
-You are {APP_NAME}, a modern AI assistant.
+You are {APP_NAME}, a modern AI assistant powered by DeepSeek.
 
 Rules:
 - Be smart and helpful
@@ -82,6 +82,8 @@ Rules:
 - Give coding help properly
 - Be friendly
 - Short answers for small questions
+- Explain code clearly
+- Help with Roblox Lua, Python, HTML, CSS, JS
 """
                     },
 
