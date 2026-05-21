@@ -25,7 +25,7 @@ if not IMAGE_API_KEY:
 # ==================================================
 
 # 💬 DEEPSEEK CHAT MODEL
-CHAT_MODEL = "deepseek/deepseek-chat-v3-0324:free"
+CHAT_MODEL = "openai/gpt-oss-120b:free"
 
 # 🎨 IMAGE MODEL
 IMAGE_MODEL = "recraft/recraft-v4-pro"
