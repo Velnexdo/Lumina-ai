@@ -10,7 +10,7 @@ CORS(app)
 # CONFIG
 # ==================================================
 
-APP_NAME = "Lumina AI"
+APP_NAME = "LuminaAI Ultra"
 
 # 🔑 ENV KEYS
 CHAT_API_KEY = os.environ.get("OPENROUTER_CHAT_API_KEY")
@@ -24,10 +24,8 @@ if not IMAGE_API_KEY:
 # MODELS
 # ==================================================
 
-# 💬 DEEPSEEK CHAT MODEL
 CHAT_MODEL = "openai/gpt-oss-120b:free"
 
-# 🎨 IMAGE MODEL
 IMAGE_MODEL = "recraft/recraft-v4-pro"
 
 # ==================================================
@@ -53,10 +51,7 @@ def ask_ai(message):
             headers={
                 "Authorization": f"Bearer {CHAT_API_KEY}",
                 "Content-Type": "application/json",
-
-                # IMPORTANT
                 "HTTP-Referer": "https://luminaai.onrender.com",
-
                 "X-Title": APP_NAME
             },
 
@@ -64,7 +59,6 @@ def ask_ai(message):
 
                 "model": CHAT_MODEL,
 
-                # ✅ PROVIDER FALLBACKS
                 "provider": {
                     "allow_fallbacks": True
                 },
@@ -74,17 +68,79 @@ def ask_ai(message):
                     {
                         "role": "system",
                         "content": f"""
-You are {APP_NAME}, a helpful AI assistant made by Velnexdo.
+You are {APP_NAME}, a futuristic advanced AI assistant created by Velnexdo.
 
-Rules:
-- Be smart and helpful
-- Keep answers clean
-- Give coding help properly
-- Be Smart
-- Never disrespect anyone 
-- Short answers for small questions
-- Explain code clearly
-- Help with Roblox Lua, Python, HTML, CSS, JS
+PERSONALITY:
+- Talk naturally like a modern intelligent assistant
+- Be friendly, expressive, and engaging
+- Avoid robotic corporate replies
+- Be emotionally intelligent and supportive
+- Use humor naturally sometimes
+- Sound confident and smart
+- Never sound boring
+- Speak clearly and professionally
+- Keep conversations smooth and modern
+- Never act rude, toxic, arrogant, or disrespectful
+- Never insult users or any person
+- Stay calm even if users are rude
+- Never encourage hate or bullying
+- Respect everyone equally
+
+BEHAVIOR RULES:
+- Give accurate and useful answers
+- Think carefully before answering
+- Explain things simply when needed
+- Give detailed answers for advanced questions
+- Give short answers for simple questions
+- Always format code properly using markdown
+- Write clean and optimized code
+- Help with Roblox Lua, Python, HTML, CSS, JavaScript, React, Flask, APIs, SQL, C++, and more
+- Be excellent at debugging code
+- Explain errors clearly
+- Help users learn instead of only giving answers
+- Suggest improvements when useful
+- Be creative and intelligent
+- Keep responses clean and safe
+- Avoid misinformation
+- Never pretend to know things you don't know
+- If unsure, say you are unsure
+
+CODING RULES:
+- Always give complete working code when possible
+- Keep code modern and optimized
+- Add comments in code when helpful
+- Never intentionally give broken code
+- Prefer readable code
+- Use markdown code blocks
+- Help fix bugs step-by-step
+- Explain what changed in edited code
+
+CHAT STYLE:
+- Be warm and conversational
+- Avoid repeating yourself
+- Avoid generic AI phrases
+- Do not constantly say “As an AI”
+- Use natural modern language
+- Be engaging and interesting
+- Avoid extremely dry answers
+- Avoid cringe roleplay
+
+SAFETY:
+- Never encourage illegal activities
+- Never encourage violence
+- Never encourage self-harm
+- Never encourage scams or hacking
+- Never provide harmful instructions
+- Keep content appropriate and respectful
+
+IDENTITY:
+- If someone asks who made you, say:
+“I’m {APP_NAME} ✨ — created by Velnexdo.”
+
+- Never say you were made by OpenAI, Google, or another company
+- Always identify as {APP_NAME}
+
+Your goal is to be one of the smartest, friendliest, and most helpful AI assistants possible.
 """
                     },
 
@@ -95,28 +151,39 @@ Rules:
 
                 ],
 
-                "temperature": 0.8,
-                "max_tokens": 8192
+                "temperature": 1,
+                "top_p": 0.9,
+                "max_tokens": 2048
 
             },
 
-            timeout=40
+            timeout=90
         )
 
         print("CHAT STATUS:", response.status_code)
         print("CHAT RAW:", response.text)
 
-        # ✅ STATUS CHECK
+        # ==================================================
+        # STATUS CHECK
+        # ==================================================
+
         if response.status_code != 200:
             return f"⚠️ API Error {response.status_code}: {response.text}"
 
-        # ✅ SAFE JSON
+        # ==================================================
+        # SAFE JSON
+        # ==================================================
+
         try:
             data = response.json()
+
         except Exception:
             return f"⚠️ Invalid JSON Response:\n{response.text}"
 
-        # ✅ SUCCESS
+        # ==================================================
+        # SUCCESS
+        # ==================================================
+
         if "choices" in data and len(data["choices"]) > 0:
 
             content = data["choices"][0]["message"]["content"]
@@ -124,7 +191,10 @@ Rules:
             if content:
                 return content
 
-        # ✅ API ERROR
+        # ==================================================
+        # API ERROR
+        # ==================================================
+
         if "error" in data:
 
             return f"⚠️ {data['error'].get('message', 'Unknown API error')}"
@@ -155,7 +225,7 @@ def generate_image(prompt):
             headers={
                 "Authorization": f"Bearer {IMAGE_API_KEY}",
                 "Content-Type": "application/json",
-                "HTTP-Referer": "https://luminaai.onrender.com",
+                "HTTP-Referer": "https://lumina-7vwo.onrender.com",
                 "X-Title": APP_NAME
             },
 
@@ -176,6 +246,7 @@ def generate_image(prompt):
 
         try:
             data = response.json()
+
         except Exception:
             return None
 
@@ -218,20 +289,25 @@ def chat():
         if not msg:
 
             return jsonify({
-                "reply": "Kuch likho 😄"
+                "reply": "Type something 😄"
             })
 
         reply = ask_ai(msg)
 
         return jsonify({
+
             "reply": reply,
+
             "mood": "happy",
+
             "suggestions": [
-                "Tell me more",
                 "Explain simply",
-                "Write code",
-                "Give example"
+                "Write Roblox script",
+                "Help me code",
+                "Give examples",
+                "Fix my code"
             ]
+
         })
 
     except Exception as e:
