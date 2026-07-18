@@ -24,7 +24,7 @@ if not IMAGE_API_KEY:
 # MODELS
 # ==================================================
 
-CHAT_MODEL = "openai/gpt-oss-120b:free"
+CHAT_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free"
 
 IMAGE_MODEL = "recraft/recraft-v4-pro"
 
