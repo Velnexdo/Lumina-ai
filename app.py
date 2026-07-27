@@ -51,7 +51,7 @@ def ask_ai(message):
             headers={
                 "Authorization": f"Bearer {CHAT_API_KEY}",
                 "Content-Type": "application/json",
-                "HTTP-Referer": "https://luminaai.onrender.com",
+                "HTTP-Referer": "https://lumina-7vwo.onrender.com",
                 "X-Title": APP_NAME
             },
 
