@@ -7,8 +7,14 @@
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<!-- Google Identity Services for real account verification -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <style>
+:root {
+  --accent-color: #19c37d;
+  --accent-hover: #14a368;
+}
 
 *{
 margin:0;
@@ -61,10 +67,23 @@ flex-direction:column;
 z-index:2;
 animation:sidebarSlide .5s ease;
 overflow:hidden;
+position:relative;
 }
 
 body.light .sidebar{
 background:#f1f1f1;
+}
+
+.sidebar-top-controls {
+display:flex;
+gap:6px;
+margin-bottom:10px;
+}
+
+.sidebar-top-controls button {
+flex:1;
+padding:8px;
+font-size:14px;
 }
 
 .main{
@@ -88,7 +107,7 @@ flex-shrink:0;
 }
 
 .header span{
-color:#19c37d;
+color:var(--accent-color);
 }
 
 #mood{
@@ -174,14 +193,14 @@ min-width:0;
 
 input:focus{
 outline:none;
-box-shadow:0 0 12px rgba(25,195,125,0.4);
+box-shadow:0 0 12px var(--accent-color);
 }
 
 button{
 padding:10px 14px;
 border:none;
 border-radius:10px;
-background:#19c37d;
+background:var(--accent-color);
 color:white;
 cursor:pointer;
 transition:.25s;
@@ -291,13 +310,13 @@ overflow-y:auto;
 font-size:50px;
 font-weight:700;
 margin-bottom:15px;
-background:linear-gradient(90deg,#fff,#19c37d);
+background:linear-gradient(90deg,#fff,var(--accent-color));
 -webkit-background-clip:text;
 -webkit-text-fill-color:transparent;
 }
 
 body.light .welcome-title{
-background:linear-gradient(90deg,#000,#19c37d);
+background:linear-gradient(90deg,#000,var(--accent-color));
 -webkit-background-clip:text;
 -webkit-text-fill-color:transparent;
 }
@@ -357,8 +376,291 @@ height:5px;
 
 .chat-box::-webkit-scrollbar-thumb,
 .history::-webkit-scrollbar-thumb{
-background:#19c37d;
+background:var(--accent-color);
 border-radius:10px;
+}
+
+/* SETTINGS MODAL & LOGIN MODAL STYLES */
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+  background: #202123;
+  color: #fff;
+  width: 100%;
+  max-width: 500px;
+  max-height: 85vh;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  border: 1px solid #444;
+}
+
+body.light .modal-content {
+  background: #ffffff;
+  color: #202123;
+  border: 1px solid #ccc;
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+body.light .modal-header {
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h2 {
+  font-size: 20px;
+}
+
+.close-btn {
+  font-size: 24px;
+  cursor: pointer;
+  color: #aaa;
+  transition: .2s;
+}
+
+.close-btn:hover {
+  color: #fff;
+}
+
+body.light .close-btn:hover {
+  color: #000;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid #333;
+  text-align: right;
+}
+
+body.light .modal-footer {
+  border-top: 1px solid #eee;
+}
+
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting-group label {
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.setting-group input[type="text"],
+.setting-group input[type="email"] {
+  width: 100%;
+  background: #2a2b32;
+  color: white;
+  border: 1px solid #444;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+body.light .setting-group input[type="text"],
+body.light .setting-group input[type="email"] {
+  background: #f9f9f9;
+  color: #333;
+  border: 1px solid #ccc;
+}
+
+.plus-box {
+  background: rgba(25, 195, 125, 0.1);
+  border: 1px solid var(--accent-color);
+  padding: 14px;
+  border-radius: 12px;
+}
+
+.plus-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.plus-desc {
+  font-size: 12px;
+  opacity: 0.8;
+  margin: 6px 0 10px 0;
+}
+
+.badge {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: bold;
+}
+
+.badge.free {
+  background: #666;
+  color: white;
+}
+
+.badge.plus {
+  background: linear-gradient(45deg, #f2994a, #f2c94c);
+  color: black;
+}
+
+.plus-btn {
+  width: 100%;
+  font-weight: bold;
+}
+
+.accent-options {
+  display: flex;
+  gap: 10px;
+}
+
+.accent-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.2s, border 0.2s;
+}
+
+.accent-dot:hover {
+  transform: scale(1.15);
+}
+
+.bg-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.bg-card {
+  padding: 10px;
+  font-size: 12px;
+  border-radius: 8px;
+  border: 1px solid #555;
+  color: white;
+  cursor: pointer;
+  text-align: center;
+  transition: .2s;
+}
+
+.bg-card:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
+
+.secondary-btn {
+  background: #555;
+  margin-top: 5px;
+}
+
+/* USER PROFILE SIDEBAR CARD (NOW CLICKABLE) */
+
+.user-profile-card {
+  margin-top: auto;
+  padding: 10px;
+  background: #2a2b32;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #444;
+  flex-shrink: 0;
+  cursor: pointer; /* Added cursor pointer */
+  transition: background 0.2s, transform 0.2s; /* Smooth hover */
+}
+
+.user-profile-card:hover {
+  background: #3a3b45;
+  transform: translateY(-2px);
+}
+
+body.light .user-profile-card {
+  background: #e5e5e5;
+  border: 1px solid #ccc;
+}
+
+body.light .user-profile-card:hover {
+  background: #d5d5d5;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 16px;
+  flex-shrink: 0;
+  overflow: hidden; 
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-details {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-email-text {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-plan-text {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+/* GOOGLE LOGIN MODAL SPECIFICS */
+.google-login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
 }
 
 @keyframes blink{
@@ -366,997 +668,862 @@ border-radius:10px;
 50%{opacity:1;}
 100%{opacity:.2;}
 }
-
-@keyframes sidebarSlide{
-from{
-opacity:0;
-transform:translateX(-40px);
-}
-to{
-opacity:1;
-transform:translateX(0);
-}
-}
-
-@keyframes mainFade{
-from{opacity:0;}
-to{opacity:1;}
-}
-
-@keyframes headerSlide{
-from{
-opacity:0;
-transform:translateY(-20px);
-}
-to{
-opacity:1;
-transform:translateY(0);
-}
-}
-
-@keyframes inputSlide{
-from{
-opacity:0;
-transform:translateY(20px);
-}
-to{
-opacity:1;
-transform:translateY(0);
-}
-}
-
-@keyframes messageSlideRight{
-from{
-opacity:0;
-transform:translateX(40px);
-}
-to{
-opacity:1;
-transform:translateX(0);
-}
-}
-
-@keyframes messageSlideLeft{
-from{
-opacity:0;
-transform:translateX(-40px);
-}
-to{
-opacity:1;
-transform:translateX(0);
-}
-}
-
-@keyframes messagePop{
-0%{
-opacity:0;
-transform:scale(.92);
-}
-100%{
-opacity:1;
-transform:scale(1);
-}
-}
-
-@keyframes imageFade{
-from{
-opacity:0;
-filter:blur(4px);
-}
-to{
-opacity:1;
-filter:blur(0);
-}
-}
-
-@keyframes fadeIn{
-from{opacity:0;}
-to{opacity:1;}
-}
-
-@keyframes bgMove{
-from{
-transform:translateY(0px);
-}
-to{
-transform:translateY(-20px);
-}
-}
-
-@keyframes welcomeFade{
-from{
-opacity:0;
-transform:translateY(20px);
-}
-to{
-opacity:1;
-transform:translateY(0);
-}
-}
-
-@keyframes cardFade{
-from{
-opacity:0;
-transform:translateY(15px);
-}
-to{
-opacity:1;
-transform:translateY(0);
-}
-}
+/* Remaining keyframes... */
+@keyframes sidebarSlide{ from{opacity:0;transform:translateX(-40px);} to{opacity:1;transform:translateX(0);} }
+@keyframes mainFade{ from{opacity:0;} to{opacity:1;} }
+@keyframes headerSlide{ from{opacity:0;transform:translateY(-20px);} to{opacity:1;transform:translateY(0);} }
+@keyframes inputSlide{ from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+@keyframes messageSlideRight{ from{opacity:0;transform:translateX(40px);} to{opacity:1;transform:translateX(0);} }
+@keyframes messageSlideLeft{ from{opacity:0;transform:translateX(-40px);} to{opacity:1;transform:translateX(0);} }
+@keyframes messagePop{ 0%{opacity:0;transform:scale(.92);} 100%{opacity:1;transform:scale(1);} }
+@keyframes imageFade{ from{opacity:0;filter:blur(4px);} to{opacity:1;filter:blur(0);} }
+@keyframes fadeIn{ from{opacity:0;} to{opacity:1;} }
+@keyframes bgMove{ from{transform:translateY(0px);} to{transform:translateY(-20px);} }
+@keyframes welcomeFade{ from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+@keyframes cardFade{ from{opacity:0;transform:translateY(15px);} to{opacity:1;transform:translateY(0);} }
 
 /* MOBILE SUPPORT */
-
 @media(max-width:900px){
-
-body{
-flex-direction:column;
-height:100dvh;
-overflow:hidden;
+body{flex-direction:column;height:100dvh;overflow:hidden;}
+.sidebar{width:100%;height:auto;flex-direction:row;align-items:center;gap:8px;padding:8px;overflow-x:auto;overflow-y:hidden;border-bottom:1px solid #444;}
+.sidebar-top-controls {margin-bottom:0;}
+.sidebar button{flex-shrink:0;min-width:45px;font-size:14px;padding:10px;}
+.history{display:flex;flex-direction:row;gap:8px;margin-top:0;overflow-x:auto;overflow-y:hidden;max-width:100%;}
+.history div{white-space:nowrap;margin-bottom:0;padding:8px 12px;font-size:12px;}
+.user-profile-card {margin-top:0;padding:6px 10px;border-radius:20px;}
+.user-details {display:none;}
+.main{width:100%;height:100%;overflow:hidden;}
+.header{font-size:18px;padding:12px;}
+#mood{font-size:11px;padding:4px;}
+.chat-box{padding:12px;padding-bottom:180px;}
+.message{max-width:100%;font-size:14px;padding:12px;border-radius:12px;}
+.welcome-screen{padding:20px 12px;justify-content:flex-start;padding-top:40px;}
+.welcome-title{font-size:30px;line-height:1.2;}
+.welcome-sub{font-size:14px;}
+.quick-grid{flex-direction:column;width:100%;align-items:center;}
+.quick-card{width:100%;max-width:100%;padding:14px;}
+.input-area{position:fixed;bottom:0;left:0;right:0;padding:10px;background:#343541;backdrop-filter:blur(10px);z-index:999;display:flex;align-items:center;gap:6px;border-top:1px solid #444;}
+body.light .input-area{background:white;}
+.input-area input{height:45px;font-size:15px;min-width:0;}
+.input-area button{height:45px;padding:0 12px;font-size:13px;flex-shrink:0;}
+#suggestions{display:flex;overflow-x:auto;gap:8px;padding:10px;white-space:nowrap;text-align:left;}
+#suggestions button{flex-shrink:0;font-size:12px;padding:8px 12px;margin:0;}
+.typing{padding-bottom:75px;}
+.status,.counter{white-space:nowrap;font-size:11px;}
 }
-
-.sidebar{
-width:100%;
-height:auto;
-flex-direction:row;
-align-items:center;
-gap:8px;
-padding:8px;
-overflow-x:auto;
-overflow-y:hidden;
-border-bottom:1px solid #444;
-}
-
-.sidebar button{
-flex-shrink:0;
-min-width:45px;
-font-size:14px;
-padding:10px;
-}
-
-.history{
-display:flex;
-flex-direction:row;
-gap:8px;
-margin-top:0;
-overflow-x:auto;
-overflow-y:hidden;
-max-width:100%;
-}
-
-.history div{
-white-space:nowrap;
-margin-bottom:0;
-padding:8px 12px;
-font-size:12px;
-}
-
-.main{
-width:100%;
-height:100%;
-overflow:hidden;
-}
-
-.header{
-font-size:18px;
-padding:12px;
-}
-
-#mood{
-font-size:11px;
-padding:4px;
-}
-
-.chat-box{
-padding:12px;
-padding-bottom:180px;
-}
-
-.message{
-max-width:100%;
-font-size:14px;
-padding:12px;
-border-radius:12px;
-}
-
-.welcome-screen{
-padding:20px 12px;
-justify-content:flex-start;
-padding-top:40px;
-}
-
-.welcome-title{
-font-size:30px;
-line-height:1.2;
-}
-
-.welcome-sub{
-font-size:14px;
-}
-
-.quick-grid{
-flex-direction:column;
-width:100%;
-align-items:center;
-}
-
-.quick-card{
-width:100%;
-max-width:100%;
-padding:14px;
-}
-
-.input-area{
-position:fixed;
-bottom:0;
-left:0;
-right:0;
-padding:10px;
-background:#343541;
-backdrop-filter:blur(10px);
-z-index:999;
-display:flex;
-align-items:center;
-gap:6px;
-border-top:1px solid #444;
-}
-
-body.light .input-area{
-background:white;
-}
-
-.input-area input{
-height:45px;
-font-size:15px;
-min-width:0;
-}
-
-.input-area button{
-height:45px;
-padding:0 12px;
-font-size:13px;
-flex-shrink:0;
-}
-
-#suggestions{
-display:flex;
-overflow-x:auto;
-gap:8px;
-padding:10px;
-white-space:nowrap;
-text-align:left;
-}
-
-#suggestions button{
-flex-shrink:0;
-font-size:12px;
-padding:8px 12px;
-margin:0;
-}
-
-.typing{
-padding-bottom:75px;
-}
-
-.status,.counter{
-white-space:nowrap;
-font-size:11px;
-}
-
-}
-
-/* EXTRA SMALL PHONES */
-
 @media(max-width:480px){
-
-.header{
-font-size:16px;
+.header{font-size:16px;}
+.welcome-title{font-size:24px;}
+.welcome-sub{font-size:13px;}
+.message{font-size:13px;padding:10px;}
+.input-area{padding:8px;gap:5px;}
+.input-area button{padding:0 10px;font-size:12px;}
+input{padding:10px;font-size:14px;}
+.sidebar button{min-width:40px;font-size:12px;}
 }
-
-.welcome-title{
-font-size:24px;
-}
-
-.welcome-sub{
-font-size:13px;
-}
-
-.message{
-font-size:13px;
-padding:10px;
-}
-
-.input-area{
-padding:8px;
-gap:5px;
-}
-
-.input-area button{
-padding:0 10px;
-font-size:12px;
-}
-
-input{
-padding:10px;
-font-size:14px;
-}
-
-.sidebar button{
-min-width:40px;
-font-size:12px;
-}
-
-}
-
 </style>
 </head>
 
 <body class="dark" onload="initApp()">
 
 <div class="sidebar">
+  <div class="sidebar-top-controls">
+    <button onclick="toggleTheme()" title="Toggle Theme">🌙</button>
+    <button onclick="newChat()" title="New Chat">➕</button>
+    <button onclick="clearChat()" title="Clear Chat">🧹</button>
+    <button onclick="openSettings()" title="Settings">⚙️</button>
+  </div>
 
-<button onclick="toggleTheme()">🌙</button>
+  <div id="history" class="history"></div>
+  <div id="status" class="status"></div>
+  <div id="counter" class="counter"></div>
 
-<button onclick="newChat()">➕</button>
-
-<button onclick="clearChat()">🧹</button>
-
-<div id="history" class="history"></div>
-
-<div id="status" class="status"></div>
-
-<div id="counter" class="counter"></div>
-
+  <!-- INTERACTIVE USER PROFILE CARD -->
+  <div class="user-profile-card" onclick="handleProfileClick()">
+    <div class="user-avatar" id="userAvatar">U</div>
+    <div class="user-details">
+      <span class="user-email-text" id="userEmailDisplay">Loading...</span>
+      <span class="user-plan-text" id="userPlanDisplay">Free Plan</span>
+    </div>
+  </div>
 </div>
 
 <div class="main">
+  <div class="header">
+  🤖 <span id="headerName">LuminaAI Ultra</span>
+  </div>
+  <div id="mood">Mood: neutral</div>
+  <div id="chatContainer">
+    <div id="welcomeScreen" class="welcome-screen">
+      <div class="welcome-title">What’s on your mind today?</div>
+      <div class="welcome-sub" id="welcomeSub">Powered by LuminaAI Ultra ✨</div>
+      <div class="quick-grid">
+        <div class="quick-card" onclick="setPrompt('Explain black holes simply')">
+          <h3>🌌 Explain Concepts</h3>
+          <p>Ask AI to explain science, coding, space & more.</p>
+        </div>
+        <div class="quick-card" onclick="setPrompt('Write a Roblox script')">
+          <h3>💻 Coding Help</h3>
+          <p>Create scripts, websites and advanced projects.</p>
+        </div>
+        <div class="quick-card" onclick="setPrompt('Tell me a funny joke')">
+          <h3>😂 Entertainment</h3>
+          <p>Get jokes, stories, fun facts and games.</p>
+        </div>
+        <div class="quick-card" onclick="setPrompt('Generate a futuristic city image')">
+          <h3>🖼 Image Ideas</h3>
+          <p>Create AI images and cinematic concepts.</p>
+        </div>
+      </div>
+    </div>
+    <div id="chat" class="chat-box"></div>
+  </div>
 
-<div class="header">
-🤖 <span>LuminaAI Ultra</span>
+  <div class="typing" id="typing">
+    <span class="dot"></span>
+    <span class="dot"></span>
+    <span class="dot"></span>
+  </div>
+
+  <div id="suggestions"></div>
+
+  <div class="input-area">
+    <button onclick="startListening()">🎤</button>
+    <button onclick="generateImage()">🖼</button>
+    <button onclick="startPayment()">💎</button>
+    <input id="message" placeholder="Ask anything..." oninput="playTypingSound()">
+    <button onclick="sendMessage()">Send</button>
+  </div>
 </div>
 
-<div id="mood">
-Mood: neutral
+<!-- GOOGLE LOGIN MODAL -->
+<div id="loginModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>🔐 Sign in to LuminaAI</h2>
+      <!-- Allowing them to close the forced login so they can browse as guests -->
+      <span class="close-btn" onclick="document.getElementById('loginModal').style.display='none'">&times;</span>
+    </div>
+    <div class="modal-body google-login-container">
+      <p style="font-size: 14px; opacity: 0.8; margin-bottom: 25px; text-align: center;">
+        Please sign in with your Google account to verify your identity.
+      </p>
+      
+      <!-- Google Auth Container -->
+      <div id="g_id_onload"
+           data-client_id="698412561748-kkhb6e17t841egiisgrmp591cghv0lib.apps.googleusercontent.com"
+           data-context="signin"
+           data-ux_mode="popup"
+           data-callback="handleGoogleLogin"
+           data-auto_prompt="false">
+      </div>
+
+      <div class="g_id_signin"
+           data-type="standard"
+           data-shape="rectangular"
+           data-theme="outline"
+           data-text="signin_with"
+           data-size="large"
+           data-logo_alignment="left">
+      </div>
+      
+    </div>
+  </div>
 </div>
 
-<div id="chatContainer">
-
-<div id="welcomeScreen" class="welcome-screen">
-
-<div class="welcome-title">
-What’s on your mind today?
+<!-- NEW: ACCOUNT / LOGOUT MODAL -->
+<div id="accountModal" class="modal">
+  <div class="modal-content" style="max-width: 350px;">
+    <div class="modal-header">
+      <h2>👤 Account</h2>
+      <span class="close-btn" onclick="document.getElementById('accountModal').style.display='none'">&times;</span>
+    </div>
+    <div class="modal-body" style="align-items: center; text-align: center; padding-top: 30px;">
+      
+      <div class="user-avatar" id="modalUserAvatar" style="width: 80px; height: 80px; font-size: 32px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.3);"></div>
+      
+      <h3 id="modalUserEmail" style="margin-top: 15px; font-size: 18px; word-break: break-all;">Loading...</h3>
+      <p id="modalUserPlan" style="color: var(--accent-color); font-weight: bold; margin-bottom: 20px; font-size: 14px;">Free Plan</p>
+      
+      <button onclick="logout()" style="background: #e74c3c; width: 100%; padding: 12px; font-size: 16px; border-radius: 8px;">Sign Out</button>
+      
+    </div>
+  </div>
 </div>
 
-<div class="welcome-sub">
-Powered by LuminaAI Ultra ✨
-</div>
 
-<div class="quick-grid">
+<!-- SETTINGS MODAL -->
+<div id="settingsModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>⚙️ Settings</h2>
+      <span class="close-btn" onclick="closeSettings()">&times;</span>
+    </div>
+    
+    <div class="modal-body">
+      <!-- AI Nickname -->
+      <div class="setting-group">
+        <label for="aiNicknameInput">🤖 AI Nickname</label>
+        <input type="text" id="aiNicknameInput" placeholder="Enter AI Nickname">
+      </div>
+      <!-- LuminaAI Plus Membership -->
+      <div class="setting-group plus-box">
+        <div class="plus-info">
+          <h3>💎 LuminaAI Plus</h3>
+          <span id="plusBadge" class="badge free">Free Plan</span>
+        </div>
+        <p class="plus-desc">Unlock premium background colors and exclusive features for ₹99.</p>
+        <button id="upgradeBtn" class="plus-btn" onclick="buyLuminaPlus()">Upgrade to Plus (₹99)</button>
+      </div>
+      <!-- Accent Theme -->
+      <div class="setting-group">
+        <label>🎨 Accent Theme</label>
+        <div class="accent-options">
+          <button class="accent-dot" style="background:#19c37d;" onclick="setAccent('#19c37d')" title="Emerald"></button>
+          <button class="accent-dot" style="background:#007bff;" onclick="setAccent('#007bff')" title="Electric Blue"></button>
+          <button class="accent-dot" style="background:#9b51e0;" onclick="setAccent('#9b51e0')" title="Neon Purple"></button>
+          <button class="accent-dot" style="background:#ff2a74;" onclick="setAccent('#ff2a74')" title="Cyber Pink"></button>
+          <button class="accent-dot" style="background:#f2994a;" onclick="setAccent('#f2994a')" title="Amber Gold"></button>
+        </div>
+      </div>
+      <!-- Premium Background Colors -->
+      <div class="setting-group">
+        <label>🖼️ Premium Background Colors 👑</label>
+        <div class="bg-options">
+          <button class="bg-card" style="background: linear-gradient(135deg, #343541, #202123);" onclick="setBgPreset('default')">Default</button>
+          <button class="bg-card" style="background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);" onclick="setBgPreset('midnight')">Midnight 👑</button>
+          <button class="bg-card" style="background: linear-gradient(135deg, #0d0d0d, #1a1c2e, #130f26);" onclick="setBgPreset('deepspace')">Deep Space 👑</button>
+          <button class="bg-card" style="background: linear-gradient(135deg, #2d0b28, #180b2d, #0b1a2d);" onclick="setBgPreset('sunset')">Sunset 👑</button>
+          <button class="bg-card" style="background: linear-gradient(135deg, #062b1e, #0a1f18, #11261d);" onclick="setBgPreset('emerald')">Emerald Dark 👑</button>
+        </div>
+      </div>
+      <!-- Wallpaper Upload -->
+      <div class="setting-group">
+        <label for="wallpaperInput">🖼️ Custom Wallpaper Upload</label>
+        <input type="file" id="wallpaperInput" accept="image/*" onchange="handleWallpaperUpload(event)">
+        <button class="secondary-btn" onclick="removeWallpaper()">Remove Wallpaper</button>
+      </div>
+    </div>
 
-<div class="quick-card" onclick="setPrompt('Explain black holes simply')">
-<h3>🌌 Explain Concepts</h3>
-<p>Ask AI to explain science, coding, space & more.</p>
-</div>
-
-<div class="quick-card" onclick="setPrompt('Write a Roblox script')">
-<h3>💻 Coding Help</h3>
-<p>Create scripts, websites and advanced projects.</p>
-</div>
-
-<div class="quick-card" onclick="setPrompt('Tell me a funny joke')">
-<h3>😂 Entertainment</h3>
-<p>Get jokes, stories, fun facts and games.</p>
-</div>
-
-<div class="quick-card" onclick="setPrompt('Generate a futuristic city image')">
-<h3>🖼 Image Ideas</h3>
-<p>Create AI images and cinematic concepts.</p>
-</div>
-
-</div>
-
-</div>
-
-<div id="chat" class="chat-box"></div>
-
-</div>
-
-<div class="typing" id="typing">
-<span class="dot"></span>
-<span class="dot"></span>
-<span class="dot"></span>
-</div>
-
-<div id="suggestions"></div>
-
-<div class="input-area">
-
-<button onclick="startListening()">🎤</button>
-
-<button onclick="generateImage()">🖼</button>
-
-<button onclick="startPayment()">💎</button>
-
-<input id="message" placeholder="Ask anything..." oninput="playTypingSound()">
-
-<button onclick="sendMessage()">Send</button>
-
-</div>
-
+    <div class="modal-footer">
+      <button onclick="saveSettings()">Save & Close</button>
+    </div>
+  </div>
 </div>
 
 <script>
 
 let typingSoundCooldown = false;
 let currentMood = "neutral";
-
 const API_URL = window.location.origin;
-
 let chats = JSON.parse(localStorage.getItem("chats") || "[]");
-
 let currentChat = [];
 
+const bgPresets = {
+  default: "",
+  midnight: "linear-gradient(135deg, #0f2027, #203a43, #2c5364)",
+  deepspace: "linear-gradient(135deg, #0d0d0d, #1a1c2e, #130f26)",
+  sunset: "linear-gradient(135deg, #2d0b28, #180b2d, #0b1a2d)",
+  emerald: "linear-gradient(135deg, #062b1e, #0a1f18, #11261d)"
+};
+
 /* INIT */
-
 function initApp(){
+  checkAuth();
+  loadTheme();
+  loadSettings();
+  showSuggestions();
+  updateStatus();
+  renderHistory();
+  updateCounter();
+  updateWelcomeScreen();
+}
 
-loadTheme();
+/* REAL GOOGLE AUTH SYSTEM */
 
-showSuggestions();
+function checkAuth(){
+  let userEmail = localStorage.getItem("lumina_user_email");
+  let userPic = localStorage.getItem("lumina_user_pic");
+  
+  if(!userEmail){
+    document.getElementById("loginModal").style.display = "flex";
+    updateProfileUI(null, null); // Set to guest mode in UI
+  } else {
+    document.getElementById("loginModal").style.display = "none";
+    updateProfileUI(userEmail, userPic);
+  }
+}
 
-updateStatus();
+function handleProfileClick() {
+  let userEmail = localStorage.getItem("lumina_user_email");
+  
+  if (!userEmail) {
+    // Not logged in -> Show Login prompt
+    document.getElementById("loginModal").style.display = "flex";
+  } else {
+    // Logged in -> Show Account & Logout Modal
+    let picUrl = localStorage.getItem("lumina_user_pic");
+    let isPlus = localStorage.getItem("lumina_plus") === "true";
+    
+    document.getElementById("modalUserEmail").innerText = userEmail;
+    document.getElementById("modalUserPlan").innerText = isPlus ? "LuminaAI Plus ✨" : "Free Plan";
+    
+    let modalAvatar = document.getElementById("modalUserAvatar");
+    if(picUrl) {
+      modalAvatar.style.background = "transparent";
+      modalAvatar.innerHTML = `<img src="${picUrl}" alt="Profile Picture" referrerpolicy="no-referrer">`;
+    } else {
+      modalAvatar.style.background = "var(--accent-color)";
+      modalAvatar.innerText = userEmail.charAt(0).toUpperCase();
+    }
+    
+    document.getElementById("accountModal").style.display = "flex";
+  }
+}
 
-renderHistory();
+// Decodes the JWT token sent back by Google
+function decodeJwtResponse(token) {
+    let base64Url = token.split('.')[1];
+    let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+}
 
-updateCounter();
+// Triggered when Google successfully logs the user in
+function handleGoogleLogin(response) {
+  const responsePayload = decodeJwtResponse(response.credential);
+  
+  const userEmail = responsePayload.email;
+  const userPicture = responsePayload.picture;
 
-updateWelcomeScreen();
+  // Save real verified details permanently
+  localStorage.setItem("lumina_user_email", userEmail);
+  localStorage.setItem("lumina_user_pic", userPicture);
 
+  document.getElementById("loginModal").style.display = "none";
+  updateProfileUI(userEmail, userPicture);
+}
+
+function logout() {
+  localStorage.removeItem("lumina_user_email");
+  localStorage.removeItem("lumina_user_pic");
+  location.reload(); // Reload to reset state fully
+}
+
+function updateProfileUI(email, picUrl){
+  let avatarBox = document.getElementById("userAvatar");
+  let emailDisplay = document.getElementById("userEmailDisplay");
+  let planDisplay = document.getElementById("userPlanDisplay");
+  
+  if (!email) {
+    emailDisplay.innerText = "Guest User";
+    planDisplay.innerText = "Click to Sign in";
+    avatarBox.style.background = "#555";
+    avatarBox.innerHTML = "G";
+    return;
+  }
+
+  emailDisplay.innerText = email;
+  
+  // If we grabbed their profile picture from Google, display it
+  if(picUrl) {
+    avatarBox.style.background = "transparent";
+    avatarBox.innerHTML = `<img src="${picUrl}" alt="Profile Picture" referrerpolicy="no-referrer">`;
+  } else {
+    avatarBox.style.background = "var(--accent-color)";
+    avatarBox.innerText = email.charAt(0).toUpperCase();
+  }
+  
+  let isPlus = localStorage.getItem("lumina_plus") === "true";
+  planDisplay.innerText = isPlus ? "Plus Member ✨" : "Free Plan";
+}
+
+/* SETTINGS MODAL */
+function openSettings(){
+  let nick = localStorage.getItem("lumina_nickname") || "LuminaAI Ultra";
+  document.getElementById("aiNicknameInput").value = nick;
+  updatePlusUI();
+  document.getElementById("settingsModal").style.display = "flex";
+}
+
+function closeSettings(){
+  document.getElementById("settingsModal").style.display = "none";
+}
+
+function saveSettings(){
+  let nick = document.getElementById("aiNicknameInput").value.trim() || "LuminaAI Ultra";
+  localStorage.setItem("lumina_nickname", nick);
+  
+  document.getElementById("headerName").innerText = nick;
+  document.getElementById("welcomeSub").innerText = "Powered by " + nick + " ✨";
+  document.title = nick;
+  
+  closeSettings();
+}
+
+function setAccent(color){
+  document.documentElement.style.setProperty('--accent-color', color);
+  localStorage.setItem("lumina_accent", color);
+}
+
+function updatePlusUI(){
+  let isPlus = localStorage.getItem("lumina_plus") === "true";
+  let badge = document.getElementById("plusBadge");
+  let btn = document.getElementById("upgradeBtn");
+  
+  if(isPlus){
+    badge.innerText = "Plus Member ✨";
+    badge.className = "badge plus";
+    btn.innerText = "✅ Plus Active";
+    btn.disabled = true;
+    btn.style.opacity = "0.7";
+    btn.style.cursor = "default";
+  } else {
+    badge.innerText = "Free Plan";
+    badge.className = "badge free";
+    btn.innerText = "Upgrade to LuminaAI Plus (₹99)";
+    btn.disabled = false;
+    btn.style.opacity = "1";
+    btn.style.cursor = "pointer";
+  }
+}
+
+function buyLuminaPlus(){
+  if(localStorage.getItem("lumina_plus") === "true"){
+    alert("You are already a LuminaAI Plus member!");
+    return;
+  }
+  startPayment();
+}
+
+function setBgPreset(presetKey){
+  let isPlus = localStorage.getItem("lumina_plus") === "true";
+  if(presetKey !== 'default' && !isPlus){
+    alert("👑 LuminaAI Plus required! Upgrade to unlock premium background colors for ₹99.");
+    return;
+  }
+  
+  localStorage.removeItem("lumina_wallpaper");
+  applyWallpaper("");
+  
+  localStorage.setItem("lumina_bg_preset", presetKey);
+  applyBgPreset(presetKey);
+}
+
+function applyBgPreset(presetKey){
+  if(presetKey && bgPresets[presetKey]){
+    document.body.style.background = bgPresets[presetKey];
+  } else {
+    document.body.style.background = "";
+  }
+}
+
+function handleWallpaperUpload(event){
+  let file = event.target.files[0];
+  if(!file) return;
+  if(file.size > 4 * 1024 * 1024){
+    alert("Image file size should be less than 4MB.");
+    return;
+  }
+  let reader = new FileReader();
+  reader.onload = function(e){
+    let dataUrl = e.target.result;
+    try {
+      localStorage.setItem("lumina_wallpaper", dataUrl);
+      localStorage.setItem("lumina_bg_preset", "custom");
+      applyWallpaper(dataUrl);
+    } catch(err){
+      alert("Image file is too large to store in local storage.");
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function applyWallpaper(dataUrl){
+  if(dataUrl){
+    document.body.style.backgroundImage = 'url(' + dataUrl + ')';
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundPosition = 'center';
+    document.body.style.backgroundAttachment = 'fixed';
+  } else {
+    document.body.style.backgroundImage = '';
+  }
+}
+
+function removeWallpaper(){
+  localStorage.removeItem("lumina_wallpaper");
+  applyWallpaper("");
+  let presetKey = localStorage.getItem("lumina_bg_preset") || "default";
+  if(presetKey === "custom") presetKey = "default";
+  applyBgPreset(presetKey);
+}
+
+function loadSettings(){
+  let nick = localStorage.getItem("lumina_nickname") || "LuminaAI Ultra";
+  document.getElementById("headerName").innerText = nick;
+  document.getElementById("welcomeSub").innerText = "Powered by " + nick + " ✨";
+  document.title = nick;
+  
+  let accent = localStorage.getItem("lumina_accent") || "#19c37d";
+  document.documentElement.style.setProperty('--accent-color', accent);
+  
+  updatePlusUI();
+  
+  let wp = localStorage.getItem("lumina_wallpaper");
+  if(wp){
+    applyWallpaper(wp);
+  } else {
+    let preset = localStorage.getItem("lumina_bg_preset") || "default";
+    applyBgPreset(preset);
+  }
 }
 
 /* WELCOME SCREEN */
-
 function updateWelcomeScreen(){
-
-let welcome = document.getElementById("welcomeScreen");
-
-let chat = document.getElementById("chat");
-
-if(currentChat.length === 0){
-
-welcome.style.display = "flex";
-
-chat.style.display = "none";
-
-}else{
-
-welcome.style.display = "none";
-
-chat.style.display = "block";
-
-}
-
+  let welcome = document.getElementById("welcomeScreen");
+  let chat = document.getElementById("chat");
+  if(currentChat.length === 0){
+    welcome.style.display = "flex";
+    chat.style.display = "none";
+  }else{
+    welcome.style.display = "none";
+    chat.style.display = "block";
+  }
 }
 
 /* AUTO SEND */
-
 function setPrompt(text){
-
-document.getElementById("message").value = text;
-
-sendMessage();
-
+  document.getElementById("message").value = text;
+  sendMessage();
 }
 
 /* THEME */
-
 function toggleTheme(){
-
-let theme = localStorage.getItem("theme") || "dark";
-
-if(theme==="dark"){
-
-document.body.classList.remove("dark","light");
-document.body.classList.add("light");
-
-localStorage.setItem("theme","light");
-
-}else{
-
-document.body.classList.remove("dark","light");
-document.body.classList.add("dark");
-
-localStorage.setItem("theme","dark");
-
-}
-
+  let theme = localStorage.getItem("theme") || "dark";
+  if(theme==="dark"){
+    document.body.classList.remove("dark","light");
+    document.body.classList.add("light");
+    localStorage.setItem("theme","light");
+  }else{
+    document.body.classList.remove("dark","light");
+    document.body.classList.add("dark");
+    localStorage.setItem("theme","dark");
+  }
 }
 
 function loadTheme(){
-
-let theme = localStorage.getItem("theme") || "dark";
-
-document.body.classList.remove("dark","light");
-document.body.classList.add(theme);
-
+  let theme = localStorage.getItem("theme") || "dark";
+  document.body.classList.remove("dark","light");
+  document.body.classList.add(theme);
 }
 
 /* SOUND */
-
 function playTypingSound(){
-
-if(typingSoundCooldown) return;
-
-typingSoundCooldown = true;
-
-let audio = new Audio("https://www.soundjay.com/button/sounds/button-16.mp3");
-
-audio.volume = 0.1;
-
-audio.play().catch(()=>{});
-
-setTimeout(()=>{
-typingSoundCooldown=false;
-},120);
-
+  if(typingSoundCooldown) return;
+  typingSoundCooldown = true;
+  let audio = new Audio("https://www.soundjay.com/button/sounds/button-16.mp3");
+  audio.volume = 0.1;
+  audio.play().catch(()=>{});
+  setTimeout(()=>{
+    typingSoundCooldown=false;
+  },120);
 }
 
 /* PAYMENT */
-
 function startPayment(){
+  let nick = localStorage.getItem("lumina_nickname") || "LuminaAI Ultra";
+  let accent = localStorage.getItem("lumina_accent") || "#19c37d";
 
-var options = {
+  var options = {
+    "key": "rzp_live_SfMTVjtUvKYFIM",
+    "amount": 9900,
+    "currency": "INR",
+    "name": nick,
+    "description": "LuminaAI Plus Subscription",
+    "handler": function(response){
+      alert("✅ Payment Successful! LuminaAI Plus Unlocked!");
+      localStorage.setItem("lumina_plus", "true");
+      updatePlusUI();
+      // Update sidebar UI without reload
+      let userEmail = localStorage.getItem("lumina_user_email");
+      let userPic = localStorage.getItem("lumina_user_pic");
+      updateProfileUI(userEmail, userPic); 
+    },
+    "theme": {"color": accent}
+  };
 
-"key":"rzp_live_SfMTVjtUvKYFIM",
-
-"amount":9900,
-
-"currency":"INR",
-
-"name":"LuminaAI Ultra",
-
-"description":"Purchase",
-
-"handler":function(response){
-
-alert("✅ Payment Successful!");
-
-},
-
-"theme":{"color":"#19c37d"}
-
-};
-
-var rzp = new Razorpay(options);
-
-rzp.open();
-
+  var rzp = new Razorpay(options);
+  rzp.open();
 }
 
 /* STATUS */
-
 function updateStatus(){
-
-let s = document.getElementById("status");
-
-s.innerText = navigator.onLine
-? "🟢 Online | Mood: " + currentMood
-: "🔴 Offline";
-
+  let s = document.getElementById("status");
+  s.innerText = navigator.onLine
+    ? "🟢 Online | Mood: " + currentMood
+    : "🔴 Offline";
 }
 
-window.addEventListener("online",updateStatus);
-
-window.addEventListener("offline",updateStatus);
+window.addEventListener("online", updateStatus);
+window.addEventListener("offline", updateStatus);
 
 /* SUGGESTIONS */
-
 function showSuggestions(){
+  let box = document.getElementById("suggestions");
+  box.innerHTML="";
 
-let box = document.getElementById("suggestions");
-
-box.innerHTML="";
-
-[
-"Hi",
-"What is AI?",
-"Tell me a joke",
-"Explain planet",
-"Write Roblox Script"
-]
-.forEach(s=>{
-
-let b=document.createElement("button");
-
-b.innerText=s;
-
-b.onclick=()=>{
-
-document.getElementById("message").value=s;
-
-sendMessage();
-
-};
-
-box.appendChild(b);
-
-});
-
+  [
+    "Hi",
+    "What is AI?",
+    "Tell me a joke",
+    "Explain planet",
+    "Write Roblox Script"
+  ].forEach(s=>{
+    let b = document.createElement("button");
+    b.innerText = s;
+    b.onclick = ()=>{
+      document.getElementById("message").value = s;
+      sendMessage();
+    };
+    box.appendChild(b);
+  });
 }
 
 /* SAVE */
-
 function save(){
-
-localStorage.setItem("chats",JSON.stringify(chats));
-
-updateCounter();
-
+  localStorage.setItem("chats", JSON.stringify(chats));
+  updateCounter();
 }
 
 /* NEW CHAT */
-
 function newChat(){
-
-if(currentChat.length>0){
-
-chats.push(currentChat);
-
-save();
-
-}
-
-currentChat=[];
-
-document.getElementById("chat").innerHTML="";
-
-renderHistory();
-
-updateWelcomeScreen();
-
+  if(currentChat.length > 0){
+    chats.push(currentChat);
+    save();
+  }
+  currentChat = [];
+  document.getElementById("chat").innerHTML = "";
+  renderHistory();
+  updateWelcomeScreen();
 }
 
 /* CLEAR */
-
 function clearChat(){
-
-currentChat=[];
-
-document.getElementById("chat").innerHTML="";
-
-save();
-
-updateWelcomeScreen();
-
+  currentChat = [];
+  document.getElementById("chat").innerHTML = "";
+  save();
+  updateWelcomeScreen();
 }
 
 /* HISTORY */
-
 function renderHistory(){
-
-let h=document.getElementById("history");
-
-h.innerHTML="";
-
-chats.forEach((c,i)=>{
-
-let d=document.createElement("div");
-
-d.innerText="Chat "+(i+1);
-
-d.onclick=()=>loadChat(i);
-
-h.appendChild(d);
-
-});
-
+  let h = document.getElementById("history");
+  h.innerHTML = "";
+  chats.forEach((c, i)=>{
+    let d = document.createElement("div");
+    d.innerText = "Chat " + (i + 1);
+    d.onclick = ()=>loadChat(i);
+    h.appendChild(d);
+  });
 }
 
 function loadChat(i){
-
-currentChat=chats[i];
-
-document.getElementById("chat").innerHTML="";
-
-currentChat.forEach(m=>addMessage(m.text,m.sender));
-
-updateWelcomeScreen();
-
+  currentChat = chats[i];
+  document.getElementById("chat").innerHTML = "";
+  currentChat.forEach(m => addMessage(m.text, m.sender));
+  updateWelcomeScreen();
 }
 
 /* ENTER SEND */
-
-document.addEventListener("keypress",function(e){
-
-if(e.key==="Enter"){
-
-e.preventDefault();
-
-sendMessage();
-
-}
-
+document.addEventListener("keypress", function(e){
+  if(e.key === "Enter"){
+    e.preventDefault();
+    sendMessage();
+  }
 });
 
 /* SEND */
+async function sendMessage(){
+  let input = document.getElementById("message");
+  let msg = input.value.trim();
+  if(!msg) return;
 
-function sendMessage(){
+  addMessage(msg, "user");
+  currentChat.push({
+    text: msg,
+    sender: "user"
+  });
 
-let input=document.getElementById("message");
+  updateWelcomeScreen();
+  save();
+  input.value = "";
 
-let msg=input.value.trim();
+  document.getElementById("typing").style.display = "block";
+  smoothAutoScroll();
 
-if(!msg) return;
+  try {
+    let res = await fetch(API_URL + "/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: msg
+      })
+    });
 
-addMessage(msg,"user");
+    if(!res.ok){
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
 
-currentChat.push({
-text:msg,
-sender:"user"
-});
+    let data = await res.json();
 
-updateWelcomeScreen();
+    currentMood = data.mood || "neutral";
+    document.getElementById("mood").innerText = "Mood: " + currentMood;
+    updateSuggestions(data.suggestions);
 
-save();
+    document.getElementById("typing").style.display = "none";
+    handleBotReply(data.reply || "Unable to get a response from the server.");
 
-input.value="";
-
-document.getElementById("typing").style.display="block";
-
-smoothAutoScroll();
-
-fetch(API_URL + "/chat",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-message:msg
-})
-
-})
-.then(res=>res.json())
-
-.then(data=>{
-
-currentMood=data.mood || "neutral";
-
-document.getElementById("mood").innerText =
-"Mood: " + currentMood;
-
-updateSuggestions(data.suggestions);
-
-setTimeout(()=>{
-
-document.getElementById("typing").style.display="none";
-
-handleBotReply(data.reply || "...");
-
-},500);
-
-})
-
-.catch(err=>{
-
-document.getElementById("typing").style.display="none";
-
-handleBotReply("⚠ Server error or backend not running");
-
-console.error(err);
-
-});
-
+  } catch(err){
+    document.getElementById("typing").style.display = "none";
+    handleBotReply("Unable to get a response from the server.");
+    console.error(err);
+  }
 }
 
 /* UPDATE SUGGESTIONS */
-
 function updateSuggestions(list){
+  if(!list) return;
+  let box = document.getElementById("suggestions");
+  box.innerHTML = "";
 
-if(!list) return;
-
-let box=document.getElementById("suggestions");
-
-box.innerHTML="";
-
-list.forEach(s=>{
-
-let b=document.createElement("button");
-
-b.innerText=s;
-
-b.onclick=()=>{
-
-document.getElementById("message").value=s;
-
-sendMessage();
-
-};
-
-box.appendChild(b);
-
-});
-
+  list.forEach(s=>{
+    let b = document.createElement("button");
+    b.innerText = s;
+    b.onclick = ()=>{
+      document.getElementById("message").value = s;
+      sendMessage();
+    };
+    box.appendChild(b);
+  });
 }
 
 /* BOT REPLY */
-
 function handleBotReply(text){
-
-let delay=Math.random()*500+300;
-
-setTimeout(()=>{
-
-typeEffect(text);
-
-currentChat.push({
-text:text,
-sender:"bot"
-});
-
-save();
-
-speak(text);
-
-},delay);
-
+  typeEffect(text);
+  currentChat.push({
+    text: text,
+    sender: "bot"
+  });
+  save();
+  speak(text);
 }
 
 /* IMAGE */
-
 function generateImage(){
+  let userPrompt = prompt("Enter image prompt:");
+  if(!userPrompt) return;
 
-let userPrompt=prompt("Enter image prompt:");
+  let url = "https://image.pollinations.ai/prompt/" + encodeURIComponent(userPrompt);
 
-if(!userPrompt)return;
+  let imageMarkdown = `🖼 <b>${userPrompt}</b><br><img src="${url}" alt="${userPrompt}">`;
+  addMessage(imageMarkdown, "bot");
 
-let url =
-"https://image.pollinations.ai/prompt/" +
-encodeURIComponent(userPrompt);
-
-addMessage(`
-🖼 <b>${userPrompt}</b><br>
-<img src="${url}">
-`,"bot");
-
+  currentChat.push({
+    text: `🖼 Generated Image for: "${userPrompt}"\n\n![${userPrompt}](${url})`,
+    sender: "bot"
+  });
+  save();
+  updateWelcomeScreen();
 }
 
 /* SMOOTH AUTO SCROLL */
-
 function smoothAutoScroll(){
-
-let chat = document.getElementById("chat");
-
-requestAnimationFrame(()=>{
-
-chat.scrollTo({
-top: chat.scrollHeight + 500,
-behavior: "smooth"
-});
-
-});
-
+  let chat = document.getElementById("chat");
+  requestAnimationFrame(()=>{
+    chat.scrollTo({
+      top: chat.scrollHeight + 500,
+      behavior: "smooth"
+    });
+  });
 }
 
 /* TYPE EFFECT */
-
 function typeEffect(text){
+  let chat = document.getElementById("chat");
+  let div = document.createElement("div");
+  div.classList.add("message", "bot");
+  chat.appendChild(div);
 
-let chat=document.getElementById("chat");
+  smoothAutoScroll();
 
-let div=document.createElement("div");
+  let i = 0;
+  let temp = "";
+  let interval = setInterval(()=>{
+    temp += text[i] || "";
+    div.innerHTML = marked.parse(temp);
+    i++;
+    smoothAutoScroll();
 
-div.classList.add("message","bot");
-
-chat.appendChild(div);
-
-smoothAutoScroll();
-
-let i=0;
-
-let temp="";
-
-let interval=setInterval(()=>{
-
-temp += text[i] || "";
-
-div.innerHTML = marked.parse(temp);
-
-i++;
-
-smoothAutoScroll();
-
-if(i>=text.length){
-
-clearInterval(interval);
-
-smoothAutoScroll();
-
-updateCounter();
-
-}
-
-},15);
-
+    if(i >= text.length){
+      clearInterval(interval);
+      smoothAutoScroll();
+      updateCounter();
+    }
+  }, 15);
 }
 
 /* ADD MESSAGE */
+function addMessage(text, sender){
+  let chat = document.getElementById("chat");
+  let div = document.createElement("div");
+  div.classList.add("message", sender);
+  div.innerHTML = marked.parse(text);
+  chat.appendChild(div);
 
-function addMessage(text,sender){
-
-let chat=document.getElementById("chat");
-
-let div=document.createElement("div");
-
-div.classList.add("message",sender);
-
-div.innerHTML = marked.parse(text);
-
-chat.appendChild(div);
-
-setTimeout(()=>{
-smoothAutoScroll();
-},50);
-
+  setTimeout(()=>{
+    smoothAutoScroll();
+  }, 50);
 }
 
 /* VOICE */
-
 function speak(text){
-
-try{
-
-window.speechSynthesis.cancel();
-
-let speech = new SpeechSynthesisUtterance(text);
-
-speech.lang="en-US";
-
-window.speechSynthesis.speak(speech);
-
-}catch(e){}
-
+  if('speechSynthesis' in window){
+    try{
+      window.speechSynthesis.cancel();
+      let cleanText = text.replace(/[*#`_]/g, '');
+      let speech = new SpeechSynthesisUtterance(cleanText);
+      speech.lang = "en-US";
+      speech.rate = 1.0;
+      speech.pitch = 1.0;
+      window.speechSynthesis.speak(speech);
+    } catch(e){}
+  }
 }
 
 /* SPEECH */
-
 function startListening(){
-
-if(!('webkitSpeechRecognition' in window)){
-
-alert("Speech not supported!");
-
-return;
-
-}
-
-let recognition = new webkitSpeechRecognition();
-
-recognition.lang="en-US";
-
-recognition.start();
-
-recognition.onresult=function(event){
-
-document.getElementById("message").value =
-event.results[0][0].transcript;
-
-};
-
+  if(!('webkitSpeechRecognition' in window)){
+    alert("Speech recognition is not supported in your browser.");
+    return;
+  }
+  let recognition = new webkitSpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.start();
+  recognition.onresult = function(event){
+    document.getElementById("message").value = event.results[0][0].transcript;
+    sendMessage();
+  };
 }
 
 /* COUNTER */
-
 function updateCounter(){
-
-document.getElementById("counter").innerText =
-"Messages: " + currentChat.length;
-
+  document.getElementById("counter").innerText = "Messages: " + currentChat.length;
 }
 
 </script>
-
 </body>
 </html>
