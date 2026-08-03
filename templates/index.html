@@ -596,8 +596,8 @@ body.light .setting-group input[type="email"] {
   gap: 10px;
   border: 1px solid #444;
   flex-shrink: 0;
-  cursor: pointer; /* Added cursor pointer */
-  transition: background 0.2s, transform 0.2s; /* Smooth hover */
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
 }
 
 .user-profile-card:hover {
@@ -668,7 +668,6 @@ body.light .user-profile-card:hover {
 50%{opacity:1;}
 100%{opacity:.2;}
 }
-/* Remaining keyframes... */
 @keyframes sidebarSlide{ from{opacity:0;transform:translateX(-40px);} to{opacity:1;transform:translateX(0);} }
 @keyframes mainFade{ from{opacity:0;} to{opacity:1;} }
 @keyframes headerSlide{ from{opacity:0;transform:translateY(-20px);} to{opacity:1;transform:translateY(0);} }
@@ -801,7 +800,6 @@ input{padding:10px;font-size:14px;}
   <div class="modal-content">
     <div class="modal-header">
       <h2>🔐 Sign in to LuminaAI</h2>
-      <!-- Allowing them to close the forced login so they can browse as guests -->
       <span class="close-btn" onclick="document.getElementById('loginModal').style.display='none'">&times;</span>
     </div>
     <div class="modal-body google-login-container">
@@ -831,7 +829,7 @@ input{padding:10px;font-size:14px;}
   </div>
 </div>
 
-<!-- NEW: ACCOUNT / LOGOUT MODAL -->
+<!-- ACCOUNT / LOGOUT MODAL -->
 <div id="accountModal" class="modal">
   <div class="modal-content" style="max-width: 350px;">
     <div class="modal-header">
@@ -850,7 +848,6 @@ input{padding:10px;font-size:14px;}
     </div>
   </div>
 </div>
-
 
 <!-- SETTINGS MODAL -->
 <div id="settingsModal" class="modal">
@@ -912,7 +909,6 @@ input{padding:10px;font-size:14px;}
 </div>
 
 <script>
-
 let typingSoundCooldown = false;
 let currentMood = "neutral";
 const API_URL = window.location.origin;
@@ -940,14 +936,13 @@ function initApp(){
 }
 
 /* REAL GOOGLE AUTH SYSTEM */
-
 function checkAuth(){
   let userEmail = localStorage.getItem("lumina_user_email");
   let userPic = localStorage.getItem("lumina_user_pic");
   
   if(!userEmail){
     document.getElementById("loginModal").style.display = "flex";
-    updateProfileUI(null, null); // Set to guest mode in UI
+    updateProfileUI(null, null);
   } else {
     document.getElementById("loginModal").style.display = "none";
     updateProfileUI(userEmail, userPic);
@@ -958,10 +953,8 @@ function handleProfileClick() {
   let userEmail = localStorage.getItem("lumina_user_email");
   
   if (!userEmail) {
-    // Not logged in -> Show Login prompt
     document.getElementById("loginModal").style.display = "flex";
   } else {
-    // Logged in -> Show Account & Logout Modal
     let picUrl = localStorage.getItem("lumina_user_pic");
     let isPlus = localStorage.getItem("lumina_plus") === "true";
     
@@ -981,7 +974,6 @@ function handleProfileClick() {
   }
 }
 
-// Decodes the JWT token sent back by Google
 function decodeJwtResponse(token) {
     let base64Url = token.split('.')[1];
     let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -991,25 +983,34 @@ function decodeJwtResponse(token) {
     return JSON.parse(jsonPayload);
 }
 
-// Triggered when Google successfully logs the user in
 function handleGoogleLogin(response) {
   const responsePayload = decodeJwtResponse(response.credential);
   
   const userEmail = responsePayload.email;
   const userPicture = responsePayload.picture;
 
-  // Save real verified details permanently
+  // Automatically grant Plus to specific users
+  const plusEmails = [
+    "velnexdo@gmail.com",
+    "gyansinggyansingh9487@gmail.com"
+  ];
+
+  if (plusEmails.includes(userEmail.toLowerCase())) {
+    localStorage.setItem("lumina_plus", "true");
+  }
+
   localStorage.setItem("lumina_user_email", userEmail);
   localStorage.setItem("lumina_user_pic", userPicture);
 
   document.getElementById("loginModal").style.display = "none";
   updateProfileUI(userEmail, userPicture);
+  updatePlusUI();
 }
 
 function logout() {
   localStorage.removeItem("lumina_user_email");
   localStorage.removeItem("lumina_user_pic");
-  location.reload(); // Reload to reset state fully
+  location.reload();
 }
 
 function updateProfileUI(email, picUrl){
@@ -1027,7 +1028,6 @@ function updateProfileUI(email, picUrl){
 
   emailDisplay.innerText = email;
   
-  // If we grabbed their profile picture from Google, display it
   if(picUrl) {
     avatarBox.style.background = "transparent";
     avatarBox.innerHTML = `<img src="${picUrl}" alt="Profile Picture" referrerpolicy="no-referrer">`;
@@ -1193,13 +1193,11 @@ function updateWelcomeScreen(){
   }
 }
 
-/* AUTO SEND */
 function setPrompt(text){
   document.getElementById("message").value = text;
   sendMessage();
 }
 
-/* THEME */
 function toggleTheme(){
   let theme = localStorage.getItem("theme") || "dark";
   if(theme==="dark"){
@@ -1219,49 +1217,8 @@ function loadTheme(){
   document.body.classList.add(theme);
 }
 
-/* SOUND */
-function playTypingSound(){
-  if(typingSoundCooldown) return;
-  typingSoundCooldown = true;
-  let audio = new Audio("https://www.soundjay.com/button/sounds/button-16.mp3");
-  audio.volume = 0.1;
-  audio.play().catch(()=>{});
-  setTimeout(()=>{
-    typingSoundCooldown=false;
-  },120);
-}
-
-/* PAYMENT */
-function startPayment(){
-  let nick = localStorage.getItem("lumina_nickname") || "LuminaAI Ultra";
-  let accent = localStorage.getItem("lumina_accent") || "#19c37d";
-
-  var options = {
-    "key": "rzp_live_SfMTVjtUvKYFIM",
-    "amount": 9900,
-    "currency": "INR",
-    "name": nick,
-    "description": "LuminaAI Plus Subscription",
-    "handler": function(response){
-      alert("✅ Payment Successful! LuminaAI Plus Unlocked!");
-      localStorage.setItem("lumina_plus", "true");
-      updatePlusUI();
-      // Update sidebar UI without reload
-      let userEmail = localStorage.getItem("lumina_user_email");
-      let userPic = localStorage.getItem("lumina_user_pic");
-      updateProfileUI(userEmail, userPic); 
-    },
-    "theme": {"color": accent}
-  };
-
-  var rzp = new Razorpay(options);
-  rzp.open();
-}
-
-/* STATUS */
 function updateStatus(){
-  let s = document.getElementById("status");
-  s.innerText = navigator.onLine
+  document.getElementById("status").innerText = navigator.onLine
     ? "🟢 Online | Mood: " + currentMood
     : "🔴 Offline";
 }
@@ -1269,7 +1226,6 @@ function updateStatus(){
 window.addEventListener("online", updateStatus);
 window.addEventListener("offline", updateStatus);
 
-/* SUGGESTIONS */
 function showSuggestions(){
   let box = document.getElementById("suggestions");
   box.innerHTML="";
@@ -1291,210 +1247,161 @@ function showSuggestions(){
   });
 }
 
-/* SAVE */
-function save(){
-  localStorage.setItem("chats", JSON.stringify(chats));
+function playTypingSound(){
+  if(typingSoundCooldown) return;
+  typingSoundCooldown = true;
+  setTimeout(()=> typingSoundCooldown=false, 300);
+  try{
+    let ctx = new (window.AudioContext || window.webkitAudioContext)();
+    let osc = ctx.createOscillator();
+    let gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(600, ctx.currentTime);
+    gain.gain.setValueAtTime(0.02, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.05);
+  }catch(e){}
+}
+
+function startPayment(){
+  var options = {
+    "key": "rzp_test_YourKeyHere",
+    "amount": "9900",
+    "currency": "INR",
+    "name": "LuminaAI Ultra",
+    "description": "LuminaAI Plus Subscription",
+    "handler": function (response){
+      localStorage.setItem("lumina_plus", "true");
+      updatePlusUI();
+      alert("Payment successful! Welcome to LuminaAI Plus ✨");
+    },
+    "prefill": {
+      "email": localStorage.getItem("lumina_user_email") || ""
+    },
+    "theme": {
+      "color": "#19c37d"
+    }
+  };
+  var rzp1 = new Razorpay(options);
+  rzp1.open();
+}
+
+function newChat(){
+  if(currentChat.length > 0){
+    chats.unshift([...currentChat]);
+    localStorage.setItem("chats", JSON.stringify(chats));
+    currentChat = [];
+    renderHistory();
+  }
+  document.getElementById("chat").innerHTML = "";
+  updateWelcomeScreen();
   updateCounter();
 }
 
-/* NEW CHAT */
-function newChat(){
-  if(currentChat.length > 0){
-    chats.push(currentChat);
-    save();
-  }
-  currentChat = [];
-  document.getElementById("chat").innerHTML = "";
-  renderHistory();
-  updateWelcomeScreen();
-}
-
-/* CLEAR */
 function clearChat(){
   currentChat = [];
   document.getElementById("chat").innerHTML = "";
-  save();
   updateWelcomeScreen();
+  updateCounter();
 }
 
-/* HISTORY */
 function renderHistory(){
-  let h = document.getElementById("history");
-  h.innerHTML = "";
-  chats.forEach((c, i)=>{
+  let historyBox = document.getElementById("history");
+  historyBox.innerHTML = "";
+  chats.forEach((chat, index)=>{
     let d = document.createElement("div");
-    d.innerText = "Chat " + (i + 1);
-    d.onclick = ()=>loadChat(i);
-    h.appendChild(d);
+    d.innerText = chat[0] ? chat[0].text.substring(0, 25) + "..." : "Chat " + (index+1);
+    d.onclick = ()=>{
+      currentChat = [...chat];
+      let chatBox = document.getElementById("chat");
+      chatBox.innerHTML = "";
+      currentChat.forEach(m=>{
+        appendMessage(m.text, m.sender, false);
+      });
+      updateWelcomeScreen();
+      updateCounter();
+    };
+    historyBox.appendChild(d);
   });
 }
 
-function loadChat(i){
-  currentChat = chats[i];
-  document.getElementById("chat").innerHTML = "";
-  currentChat.forEach(m => addMessage(m.text, m.sender));
-  updateWelcomeScreen();
+function appendMessage(text, sender, animate=true){
+  let chatBox = document.getElementById("chat");
+  let div = document.createElement("div");
+  div.className = "message " + sender;
+  
+  if(sender === 'bot'){
+    div.innerHTML = marked.parse(text);
+  } else {
+    div.innerText = text;
+  }
+  
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-/* ENTER SEND */
-document.addEventListener("keypress", function(e){
-  if(e.key === "Enter"){
-    e.preventDefault();
-    sendMessage();
-  }
-});
-
-/* SEND */
 async function sendMessage(){
   let input = document.getElementById("message");
-  let msg = input.value.trim();
-  if(!msg) return;
-
-  addMessage(msg, "user");
-  currentChat.push({
-    text: msg,
-    sender: "user"
-  });
-
-  updateWelcomeScreen();
-  save();
+  let text = input.value.trim();
+  if(!text) return;
+  
   input.value = "";
-
-  document.getElementById("typing").style.display = "block";
-  smoothAutoScroll();
-
-  try {
-    let res = await fetch(API_URL + "/chat", {
+  appendMessage(text, "user");
+  currentChat.push({text: text, sender: "user"});
+  updateWelcomeScreen();
+  updateCounter();
+  
+  let typing = document.getElementById("typing");
+  typing.style.display = "block";
+  
+  try{
+    let res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSy...YOUR_API_KEY", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
-        message: msg
+        contents: [{parts: [{text: text}]}]
       })
     });
-
-    if(!res.ok){
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
-
     let data = await res.json();
-
-    currentMood = data.mood || "neutral";
-    document.getElementById("mood").innerText = "Mood: " + currentMood;
-    updateSuggestions(data.suggestions);
-
-    document.getElementById("typing").style.display = "none";
-    handleBotReply(data.reply || "Unable to get a response from the server.");
-
-  } catch(err){
-    document.getElementById("typing").style.display = "none";
-    handleBotReply("Unable to get a response from the server.");
-    console.error(err);
+    let reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm not sure how to respond to that.";
+    
+    typing.style.display = "none";
+    appendMessage(reply, "bot");
+    currentChat.push({text: reply, sender: "bot"});
+    updateCounter();
+    speak(reply);
+  }catch(err){
+    typing.style.display = "none";
+    let errText = "Error connecting to AI service.";
+    appendMessage(errText, "bot");
+    currentChat.push({text: errText, sender: "bot"});
+    updateCounter();
   }
 }
 
-/* UPDATE SUGGESTIONS */
-function updateSuggestions(list){
-  if(!list) return;
-  let box = document.getElementById("suggestions");
-  box.innerHTML = "";
-
-  list.forEach(s=>{
-    let b = document.createElement("button");
-    b.innerText = s;
-    b.onclick = ()=>{
-      document.getElementById("message").value = s;
-      sendMessage();
-    };
-    box.appendChild(b);
-  });
-}
-
-/* BOT REPLY */
-function handleBotReply(text){
-  typeEffect(text);
-  currentChat.push({
-    text: text,
-    sender: "bot"
-  });
-  save();
-  speak(text);
-}
-
-/* IMAGE */
 function generateImage(){
-  let userPrompt = prompt("Enter image prompt:");
-  if(!userPrompt) return;
-
-  let url = "https://image.pollinations.ai/prompt/" + encodeURIComponent(userPrompt);
-
-  let imageMarkdown = `🖼 <b>${userPrompt}</b><br><img src="${url}" alt="${userPrompt}">`;
-  addMessage(imageMarkdown, "bot");
-
-  currentChat.push({
-    text: `🖼 Generated Image for: "${userPrompt}"\n\n![${userPrompt}](${url})`,
-    sender: "bot"
-  });
-  save();
+  let prompt = prompt || "A futuristic sci-fi city";
+  let chatBox = document.getElementById("chat");
+  let imgUrl = "https://picsum.photos/800/450?" + Math.random();
+  appendMessage("Generated Image for: " + prompt, "user");
+  
+  let div = document.createElement("div");
+  div.className = "message bot";
+  div.innerHTML = `<p>Here is your generated image:</p><img src="${imgUrl}" alt="Generated Image">`;
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
+  currentChat.push({text: "[Image Generated]", sender: "bot"});
+  updateCounter();
   updateWelcomeScreen();
 }
 
-/* SMOOTH AUTO SCROLL */
-function smoothAutoScroll(){
-  let chat = document.getElementById("chat");
-  requestAnimationFrame(()=>{
-    chat.scrollTo({
-      top: chat.scrollHeight + 500,
-      behavior: "smooth"
-    });
-  });
-}
-
-/* TYPE EFFECT */
-function typeEffect(text){
-  let chat = document.getElementById("chat");
-  let div = document.createElement("div");
-  div.classList.add("message", "bot");
-  chat.appendChild(div);
-
-  smoothAutoScroll();
-
-  let i = 0;
-  let temp = "";
-  let interval = setInterval(()=>{
-    temp += text[i] || "";
-    div.innerHTML = marked.parse(temp);
-    i++;
-    smoothAutoScroll();
-
-    if(i >= text.length){
-      clearInterval(interval);
-      smoothAutoScroll();
-      updateCounter();
-    }
-  }, 15);
-}
-
-/* ADD MESSAGE */
-function addMessage(text, sender){
-  let chat = document.getElementById("chat");
-  let div = document.createElement("div");
-  div.classList.add("message", sender);
-  div.innerHTML = marked.parse(text);
-  chat.appendChild(div);
-
-  setTimeout(()=>{
-    smoothAutoScroll();
-  }, 50);
-}
-
-/* VOICE */
 function speak(text){
   if('speechSynthesis' in window){
     try{
-      window.speechSynthesis.cancel();
-      let cleanText = text.replace(/[*#`_]/g, '');
+      let cleanText = text.replace(/[*_#`]/g, '');
       let speech = new SpeechSynthesisUtterance(cleanText);
       speech.lang = "en-US";
       speech.rate = 1.0;
@@ -1504,7 +1411,6 @@ function speak(text){
   }
 }
 
-/* SPEECH */
 function startListening(){
   if(!('webkitSpeechRecognition' in window)){
     alert("Speech recognition is not supported in your browser.");
@@ -1519,11 +1425,9 @@ function startListening(){
   };
 }
 
-/* COUNTER */
 function updateCounter(){
   document.getElementById("counter").innerText = "Messages: " + currentChat.length;
 }
-
 </script>
 </body>
 </html>
