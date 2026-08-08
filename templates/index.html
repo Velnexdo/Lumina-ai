@@ -203,6 +203,7 @@ flex-shrink:0;
 background:inherit;
 position:relative;
 z-index:5;
+align-items: center;
 }
 
 input{
@@ -693,6 +694,219 @@ body.light .user-profile-card:hover {
   padding: 20px 0;
 }
 
+/* REAL-TIME LIVE VOICE OVERLAY STYLES */
+#realtimeOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 20, 25, 0.92);
+  backdrop-filter: blur(12px);
+  z-index: 2000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 40px 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+body.light #realtimeOverlay {
+  background: rgba(245, 245, 250, 0.92);
+}
+
+.realtime-top {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.realtime-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 25px;
+  flex: 1;
+}
+
+.realtime-orb-container {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.realtime-orb {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6b11ff, #00d2ff, #19c37d);
+  background-size: 200% 200%;
+  animation: orbGlow 4s ease infinite;
+  box-shadow: 0 0 40px rgba(0, 210, 255, 0.4);
+  transition: transform 0.3s ease;
+}
+
+.realtime-orb.listening {
+  animation: orbGlow 4s ease infinite, orbPulse 1.5s ease-in-out infinite;
+  box-shadow: 0 0 60px rgba(25, 195, 125, 0.6);
+}
+
+.realtime-orb.speaking {
+  animation: orbGlow 4s ease infinite, orbSpeaking 0.8s ease-in-out infinite alternate;
+  box-shadow: 0 0 60px rgba(107, 17, 255, 0.7);
+}
+
+@keyframes orbGlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes orbPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+@keyframes orbSpeaking {
+  0% { transform: scale(0.95); filter: brightness(1); }
+  100% { transform: scale(1.18); filter: brightness(1.3); }
+}
+
+.realtime-voice-info {
+  text-align: center;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  transition: background 0.2s;
+}
+
+body.light .realtime-voice-info {
+  background: rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+.realtime-voice-info:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+.realtime-voice-name {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.realtime-voice-desc {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.realtime-transcript {
+  font-size: 16px;
+  opacity: 0.9;
+  max-width: 500px;
+  text-align: center;
+  min-height: 48px;
+  line-height: 1.4;
+}
+
+.realtime-controls {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.realtime-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.realtime-btn:hover {
+  transform: scale(1.1);
+}
+
+.btn-mic-toggle {
+  background: #e74c3c;
+  color: white;
+}
+
+.btn-mic-toggle.muted {
+  background: #555;
+}
+
+.btn-close-realtime {
+  background: #333;
+  color: white;
+}
+
+body.light .btn-close-realtime {
+  background: #ddd;
+  color: black;
+}
+
+/* VOICE SELECTOR MODAL */
+.voice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.voice-card {
+  background: #2a2b32;
+  border: 1px solid #444;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+body.light .voice-card {
+  background: #f4f4f4;
+  border: 1px solid #ccc;
+}
+
+.voice-card:hover {
+  border-color: var(--accent-color, #19c37d);
+  transform: translateY(-2px);
+}
+
+.voice-card.active {
+  border-color: var(--accent-color, #19c37d);
+  background: rgba(25, 195, 125, 0.12);
+}
+
+.voice-card-title {
+  font-weight: bold;
+  font-size: 15px;
+  margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.voice-card-desc {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+
 @keyframes blink{
 0%{opacity:.2;}
 50%{opacity:1;}
@@ -989,6 +1203,10 @@ white-space:nowrap;
 font-size:11px;
 }
 
+.voice-grid {
+  grid-template-columns: 1fr;
+}
+
 }
 
 /* EXTRA SMALL PHONES */
@@ -1129,6 +1347,8 @@ Powered by LuminaAI Ultra ✨
 
 <button onclick="startListening()" title="Voice Input">🎤</button>
 
+<button onclick="openRealtimeChat()" title="Real-time Voice Chat" style="background: linear-gradient(135deg, #6b11ff, #00d2ff); display: flex; align-items: center; justify-content: center; font-size: 16px;">🎙️</button>
+
 <button onclick="generateImage()" title="Generate Image">🖼</button>
 
 <button onclick="startPayment()" title="Upgrade to Plus">💎</button>
@@ -1139,6 +1359,45 @@ Powered by LuminaAI Ultra ✨
 
 </div>
 
+</div>
+
+<!-- REAL-TIME VOICE CHAT OVERLAY -->
+<div id="realtimeOverlay" class="modal">
+  <div class="realtime-top">
+    <button class="realtime-btn btn-close-realtime" onclick="closeRealtimeChat()" title="Close">✕</button>
+  </div>
+  
+  <div class="realtime-content">
+    <div class="realtime-orb-container" onclick="openVoiceSelector()">
+      <div id="realtimeOrb" class="realtime-orb"></div>
+    </div>
+    
+    <div class="realtime-voice-info" onclick="openVoiceSelector()" title="Click to change voice">
+      <div id="activeVoiceName" class="realtime-voice-name">Sol</div>
+      <div id="activeVoiceDesc" class="realtime-voice-desc">Savvy and relaxed</div>
+    </div>
+    
+    <div id="realtimeTranscript" class="realtime-transcript">Listening... Speak now or type below</div>
+  </div>
+
+  <div class="realtime-controls">
+    <button id="micToggleBtn" class="realtime-btn btn-mic-toggle" onclick="toggleRealtimeMic()" title="Mute/Unmute Mic">🎙️</button>
+  </div>
+</div>
+
+<!-- VOICE SELECTOR MODAL -->
+<div id="voiceModal" class="modal" style="z-index: 2100;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>🗣️ Choose AI Voice</h2>
+      <span class="close-btn" onclick="document.getElementById('voiceModal').style.display='none'">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="voice-grid" id="voiceGridContainer">
+        <!-- Generated dynamically -->
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- GOOGLE LOGIN MODAL -->
@@ -1273,6 +1532,25 @@ const bgPresets = {
   emerald: "linear-gradient(135deg, #062b1e, #0a1f18, #11261d)"
 };
 
+/* 10 CUSTOMIZABLE VOICES CONFIG */
+const luminaVoices = [
+  { name: "Sol", desc: "Savvy and relaxed" },
+  { name: "Cove", desc: "Soft and warm" },
+  { name: "Nova", desc: "Bright and energetic" },
+  { name: "Aria", desc: "Melodic and calm" },
+  { name: "Zephyr", desc: "Breezy and smooth" },
+  { name: "Atlas", desc: "Deep and grounded" },
+  { name: "Luna", desc: "Soft and dreamy" },
+  { name: "Echo", desc: "Clear and resonant" },
+  { name: "Sage", desc: "Wise and measured" },
+  { name: "Orion", desc: "Bold and crisp" }
+];
+
+let selectedVoiceIndex = parseInt(localStorage.getItem("lumina_selected_voice") || "0");
+let isRealtimeActive = false;
+let isMicMuted = false;
+let realtimeRecognition = null;
+
 /* INIT */
 
 function initApp(){
@@ -1285,6 +1563,7 @@ updateStatus();
 renderHistory();
 updateCounter();
 updateWelcomeScreen();
+initVoiceSelectorUI();
 }
 
 /* FETCH RENDER BACKEND CONFIG */
@@ -1547,6 +1826,209 @@ function loadSettings(){
   }
 }
 
+/* REAL-TIME VOICE CHAT & 10 CUSTOM VOICES LOGIC */
+
+function initVoiceSelectorUI() {
+  let grid = document.getElementById("voiceGridContainer");
+  if(!grid) return;
+  grid.innerHTML = "";
+
+  luminaVoices.forEach((v, index) => {
+    let card = document.createElement("div");
+    card.className = "voice-card" + (index === selectedVoiceIndex ? " active" : "");
+    card.onclick = () => selectVoice(index);
+    card.innerHTML = `
+      <div class="voice-card-title">
+        <span>${v.name}</span>
+        ${index === selectedVoiceIndex ? '<span>✓</span>' : ''}
+      </div>
+      <div class="voice-card-desc">${v.desc}</div>
+    `;
+    grid.appendChild(card);
+  });
+
+  updateActiveVoiceDisplay();
+}
+
+function selectVoice(index) {
+  selectedVoiceIndex = index;
+  localStorage.setItem("lumina_selected_voice", index);
+  initVoiceSelectorUI();
+  document.getElementById("voiceModal").style.display = "none";
+}
+
+function updateActiveVoiceDisplay() {
+  let v = luminaVoices[selectedVoiceIndex] || luminaVoices[0];
+  let nameEl = document.getElementById("activeVoiceName");
+  let descEl = document.getElementById("activeVoiceDesc");
+  if(nameEl) nameEl.innerText = v.name;
+  if(descEl) descEl.innerText = v.desc;
+}
+
+function openVoiceSelector() {
+  document.getElementById("voiceModal").style.display = "flex";
+}
+
+function openRealtimeChat() {
+  isRealtimeActive = true;
+  isMicMuted = false;
+  document.getElementById("realtimeOverlay").style.display = "flex";
+  document.getElementById("realtimeTranscript").innerText = "Listening... Speak now";
+  document.getElementById("realtimeOrb").className = "realtime-orb listening";
+  document.getElementById("micToggleBtn").className = "realtime-btn btn-mic-toggle";
+  document.getElementById("micToggleBtn").innerText = "🎙️";
+  
+  startRealtimeListening();
+}
+
+function closeRealtimeChat() {
+  isRealtimeActive = false;
+  if(realtimeRecognition) {
+    try { realtimeRecognition.stop(); } catch(e){}
+  }
+  window.speechSynthesis.cancel();
+  document.getElementById("realtimeOverlay").style.display = "none";
+}
+
+function toggleRealtimeMic() {
+  isMicMuted = !isMicMuted;
+  let btn = document.getElementById("micToggleBtn");
+  let orb = document.getElementById("realtimeOrb");
+  let trans = document.getElementById("realtimeTranscript");
+  
+  if(isMicMuted) {
+    btn.className = "realtime-btn btn-mic-toggle muted";
+    btn.innerText = "🔇";
+    orb.className = "realtime-orb";
+    trans.innerText = "Mic Muted";
+    if(realtimeRecognition) {
+      try { realtimeRecognition.stop(); } catch(e){}
+    }
+  } else {
+    btn.className = "realtime-btn btn-mic-toggle";
+    btn.innerText = "🎙️";
+    orb.className = "realtime-orb listening";
+    trans.innerText = "Listening... Speak now";
+    startRealtimeListening();
+  }
+}
+
+function startRealtimeListening() {
+  if(!isRealtimeActive || isMicMuted) return;
+  if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
+    document.getElementById("realtimeTranscript").innerText = "Speech recognition not supported in this browser.";
+    return;
+  }
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  realtimeRecognition = new SpeechRecognition();
+  realtimeRecognition.continuous = false;
+  realtimeRecognition.interimResults = true;
+  realtimeRecognition.lang = ""; // Auto-detects browser / spoken language
+
+  realtimeRecognition.onresult = function(event) {
+    let transcript = "";
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      transcript += event.results[i][0].transcript;
+    }
+    
+    document.getElementById("realtimeTranscript").innerText = `You: "${transcript}"`;
+    
+    if(event.results[0].isFinal) {
+      processRealtimeInput(transcript);
+    }
+  };
+
+  realtimeRecognition.onerror = function(event) {
+    if(isRealtimeActive && !isMicMuted) {
+      setTimeout(() => {
+        try { realtimeRecognition.start(); } catch(e){}
+      }, 1000);
+    }
+  };
+
+  realtimeRecognition.onend = function() {
+    if(isRealtimeActive && !isMicMuted) {
+      try { realtimeRecognition.start(); } catch(e){}
+    }
+  };
+
+  try {
+    realtimeRecognition.start();
+  } catch(e){}
+}
+
+function processRealtimeInput(msg) {
+  if(!msg.trim()) return;
+  
+  addMessage(msg, "user");
+  currentChat.push({ text: msg, sender: "user" });
+  updateWelcomeScreen();
+  save();
+
+  document.getElementById("realtimeTranscript").innerText = "Thinking...";
+
+  fetch(`${API_URL}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: msg })
+  })
+  .then(res => res.json())
+  .then(data => {
+    currentMood = data.mood || "neutral";
+    document.getElementById("mood").innerText = "Mood: " + currentMood;
+    updateSuggestions(data.suggestions);
+
+    let replyText = data.reply || "No response received.";
+    addMessage(replyText, "bot");
+    currentChat.push({ text: replyText, sender: "bot" });
+    save();
+
+    document.getElementById("realtimeTranscript").innerText = replyText;
+    speakRealtime(replyText);
+  })
+  .catch(err => {
+    let errText = "AI unavailable to reach, Please try again.";
+    document.getElementById("realtimeTranscript").innerText = errText;
+    speakRealtime(errText);
+  });
+}
+
+function speakRealtime(text) {
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  
+  let cleanText = text.replace(/<[^>]*>?/gm, '');
+  let speech = new SpeechSynthesisUtterance(cleanText);
+  
+  // Auto-detect language handling via browser speech synthesis voices matching selected voice name or default
+  let voices = window.speechSynthesis.getVoices();
+  if(voices.length > 0) {
+    // Pick an appropriate voice based on selected voice index or fallback
+    speech.voice = voices[selectedVoiceIndex % voices.length];
+  }
+  
+  let orb = document.getElementById("realtimeOrb");
+  if(orb) orb.className = "realtime-orb speaking";
+
+  speech.onend = function() {
+    if(isRealtimeActive && !isMicMuted) {
+      if(orb) orb.className = "realtime-orb listening";
+      document.getElementById("realtimeTranscript").innerText = "Listening... Speak now";
+      startRealtimeListening();
+    }
+  };
+
+  speech.onerror = function() {
+    if(isRealtimeActive && !isMicMuted) {
+      if(orb) orb.className = "realtime-orb listening";
+      startRealtimeListening();
+    }
+  };
+
+  window.speechSynthesis.speak(speech);
+}
+
 /* WELCOME SCREEN */
 
 function updateWelcomeScreen(){
@@ -1718,7 +2200,7 @@ function loadChat(i){
 /* ENTER SEND */
 
 document.addEventListener("keypress",function(e){
-  if(e.key==="Enter"){
+  if(e.key==="Enter" && !isRealtimeActive){
     e.preventDefault();
     sendMessage();
   }
@@ -1881,9 +2363,12 @@ function addMessage(text,sender){
 function speak(text){
   try{
     window.speechSynthesis.cancel();
-    let cleanText = text.replace(/<[^>]*>?/gm, ''); // strip html tags before reading
+    let cleanText = text.replace(/<[^>]*>?/gm, '');
     let speech = new SpeechSynthesisUtterance(cleanText);
-    speech.lang="en-US";
+    let voices = window.speechSynthesis.getVoices();
+    if(voices.length > 0) {
+      speech.voice = voices[selectedVoiceIndex % voices.length];
+    }
     window.speechSynthesis.speak(speech);
   }catch(e){}
 }
@@ -1897,7 +2382,7 @@ function startListening(){
   }
 
   let recognition = new webkitSpeechRecognition();
-  recognition.lang="en-US";
+  recognition.lang="";
   recognition.start();
 
   recognition.onresult=function(event){
