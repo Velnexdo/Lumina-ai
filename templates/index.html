@@ -144,6 +144,35 @@ animation:messagePop .35s ease forwards;
 word-wrap:break-word;
 overflow-wrap:break-word;
 line-height:1.5;
+position: relative;
+}
+
+.message-actions {
+position: absolute;
+top: 8px;
+right: 10px;
+display: flex;
+gap: 6px;
+opacity: 0;
+transition: opacity 0.2s ease;
+}
+
+.message:hover .message-actions {
+opacity: 1;
+}
+
+.msg-action-btn {
+background: rgba(0,0,0,0.3);
+border: none;
+color: #fff;
+padding: 2px 6px;
+font-size: 11px;
+border-radius: 4px;
+cursor: pointer;
+}
+
+.msg-action-btn:hover {
+background: var(--accent-color, #19c37d);
 }
 
 .message pre {
@@ -339,7 +368,7 @@ overflow-y:auto;
 }
 
 .welcome-title{
-font-size:50px;
+font-size:45px;
 font-weight:700;
 margin-bottom:15px;
 background:linear-gradient(90deg,#fff,var(--accent-color, #19c37d));
@@ -463,7 +492,7 @@ body.light .modal-header {
 }
 
 .modal-header h2 {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .close-btn {
@@ -514,7 +543,8 @@ body.light .modal-footer {
 }
 
 .setting-group input[type="text"],
-.setting-group input[type="email"] {
+.setting-group input[type="email"],
+.setting-group select {
   width: 100%;
   background: #2a2b32;
   color: white;
@@ -524,29 +554,60 @@ body.light .modal-footer {
 }
 
 body.light .setting-group input[type="text"],
-body.light .setting-group input[type="email"] {
+body.light .setting-group input[type="email"],
+body.light .setting-group select {
   background: #f9f9f9;
   color: #333;
   border: 1px solid #ccc;
 }
 
-.plus-box {
-  background: rgba(25, 195, 125, 0.1);
-  border: 1px solid var(--accent-color, #19c37d);
-  padding: 14px;
-  border-radius: 12px;
+/* PLANS UI CARDS */
+.plans-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.plus-info {
+.plan-card {
+  border: 1px solid #444;
+  background: #2a2b32;
+  border-radius: 12px;
+  padding: 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  transition: transform 0.2s, border-color 0.2s;
 }
 
-.plus-desc {
+body.light .plan-card {
+  background: #f8f8f8;
+  border: 1px solid #ddd;
+}
+
+.plan-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-color, #19c37d);
+}
+
+.plan-card.ultra {
+  border-color: #9b51e0;
+  background: linear-gradient(135deg, rgba(155, 81, 224, 0.15), rgba(42, 43, 50, 0.8));
+}
+
+.plan-card-info h4 {
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.plan-card-info p {
   font-size: 12px;
-  opacity: 0.8;
-  margin: 6px 0 10px 0;
+  opacity: 0.75;
+}
+
+.plan-price {
+  font-weight: bold;
+  font-size: 15px;
+  color: var(--accent-color, #19c37d);
 }
 
 .badge {
@@ -566,9 +627,9 @@ body.light .setting-group input[type="email"] {
   color: black;
 }
 
-.plus-btn {
-  width: 100%;
-  font-weight: bold;
+.badge.ultra {
+  background: linear-gradient(45deg, #9b51e0, #00d2ff);
+  color: white;
 }
 
 .accent-options {
@@ -674,9 +735,17 @@ body.light .user-profile-card:hover {
   flex-direction: column;
 }
 
+.user-name-text {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .user-email-text {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 11px;
+  opacity: 0.8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -684,7 +753,9 @@ body.light .user-profile-card:hover {
 
 .user-plan-text {
   font-size: 10px;
-  opacity: 0.7;
+  opacity: 0.75;
+  color: var(--accent-color, #19c37d);
+  font-weight: bold;
 }
 
 .google-login-container {
@@ -1209,8 +1280,6 @@ font-size:11px;
 
 }
 
-/* EXTRA SMALL PHONES */
-
 @media(max-width:480px){
 
 .header{
@@ -1276,6 +1345,7 @@ font-size:12px;
 <div class="user-profile-card" onclick="handleProfileClick()">
   <div class="user-avatar" id="userAvatar">U</div>
   <div class="user-details">
+    <span class="user-name-text" id="userNameDisplay">Guest</span>
     <span class="user-email-text" id="userEmailDisplay">Loading...</span>
     <span class="user-plan-text" id="userPlanDisplay">Free Plan</span>
   </div>
@@ -1297,7 +1367,7 @@ Mood: neutral
 
 <div id="welcomeScreen" class="welcome-screen">
 
-<div class="welcome-title">
+<div class="welcome-title" id="welcomeTitle">
 What’s on your mind today?
 </div>
 
@@ -1351,7 +1421,7 @@ Powered by LuminaAI Ultra ✨
 
 <button onclick="generateImage()" title="Generate Image">🖼</button>
 
-<button onclick="startPayment()" title="Upgrade to Plus">💎</button>
+<button onclick="openPlansModal()" title="Upgrade Plan">💎</button>
 
 <input id="message" placeholder="Ask anything..." oninput="playTypingSound()">
 
@@ -1434,22 +1504,100 @@ Powered by LuminaAI Ultra ✨
   </div>
 </div>
 
+<!-- ONBOARDING MODAL: Help Lumina to know more about you -->
+<div id="onboardingModal" class="modal" style="z-index: 1500;">
+  <div class="modal-content" style="max-width: 420px;">
+    <div class="modal-header">
+      <h2>✨ Know More About You</h2>
+      <span class="close-btn" onclick="document.getElementById('onboardingModal').style.display='none'">&times;</span>
+    </div>
+    <div class="modal-body">
+      <h3 style="font-size: 18px; text-align: center;">Help Lumina to know more about you</h3>
+      <p style="font-size: 13px; opacity: 0.8; text-align: center;">Tell us your name so Lumina can address you personally!</p>
+      
+      <div class="setting-group" style="margin-top: 10px;">
+        <label for="onboardingNameInput">👤 Your Name</label>
+        <input type="text" id="onboardingNameInput" placeholder="Enter your name here...">
+      </div>
+
+      <button onclick="saveOnboardingName()" style="width: 100%; padding: 12px; font-weight: bold; border-radius: 8px; margin-top: 10px;">Save Profile</button>
+    </div>
+  </div>
+</div>
+
 <!-- ACCOUNT / LOGOUT MODAL -->
 <div id="accountModal" class="modal">
-  <div class="modal-content" style="max-width: 350px;">
+  <div class="modal-content" style="max-width: 380px;">
     <div class="modal-header">
-      <h2>👤 Account</h2>
+      <h2>👤 Account Profile</h2>
       <span class="close-btn" onclick="document.getElementById('accountModal').style.display='none'">&times;</span>
     </div>
-    <div class="modal-body" style="align-items: center; text-align: center; padding-top: 30px;">
+    <div class="modal-body" style="align-items: center; text-align: center; padding-top: 20px;">
       
       <div class="user-avatar" id="modalUserAvatar" style="width: 80px; height: 80px; font-size: 32px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.3);"></div>
       
-      <h3 id="modalUserEmail" style="margin-top: 15px; font-size: 18px; word-break: break-all;">Loading...</h3>
+      <h3 id="modalUserName" style="margin-top: 12px; font-size: 20px; font-weight: bold;">User</h3>
+      <p id="modalUserEmail" style="font-size: 13px; opacity: 0.7; word-break: break-all; margin-bottom: 8px;">Loading...</p>
       <p id="modalUserPlan" style="color: var(--accent-color, #19c37d); font-weight: bold; margin-bottom: 20px; font-size: 14px;">Free Plan</p>
       
-      <button onclick="logout()" style="background: #e74c3c; width: 100%; padding: 12px; font-size: 16px; border-radius: 8px;">Sign Out</button>
+      <button onclick="openOnboardingModal()" style="width: 100%; padding: 10px; margin-bottom: 8px; background: #444654;">Edit Name / Details ✏️</button>
+      <button onclick="openPlansModal()" style="width: 100%; padding: 10px; margin-bottom: 8px; background: var(--accent-color, #19c37d);">Upgrade Membership 💎</button>
+      <button onclick="logout()" style="background: #e74c3c; width: 100%; padding: 10px; font-size: 14px; border-radius: 8px;">Sign Out</button>
       
+    </div>
+  </div>
+</div>
+
+<!-- PLANS / PRICING MODAL -->
+<div id="plansModal" class="modal">
+  <div class="modal-content" style="max-width: 550px;">
+    <div class="modal-header">
+      <h2>💎 Choose Your Subscription Plan</h2>
+      <span class="close-btn" onclick="closePlansModal()">&times;</span>
+    </div>
+    
+    <div class="modal-body">
+      <p style="font-size: 13px; opacity: 0.8; text-align: center; margin-bottom: 5px;">
+        Upgrade your LuminaAI experience with flexible monthly subscription plans.
+      </p>
+
+      <div class="plans-grid">
+        <!-- Plus Plan -->
+        <div class="plan-card">
+          <div class="plan-card-info">
+            <h4>Plus Plan <span class="badge plus">Basic Plus</span></h4>
+            <p>Access custom themes, wallpaper background upload & faster replies.</p>
+          </div>
+          <div style="text-align: right; flex-shrink: 0; margin-left: 10px;">
+            <div class="plan-price">₹99/mo</div>
+            <button onclick="selectPlan('Plus', 99)" style="margin-top: 6px; padding: 6px 12px; font-size: 12px;">Subscribe</button>
+          </div>
+        </div>
+
+        <!-- Lumina AI Pro -->
+        <div class="plan-card">
+          <div class="plan-card-info">
+            <h4>Lumina AI Pro <span class="badge" style="background: #007bff; color: white;">Pro</span></h4>
+            <p>High priority responses, 10 HD Voice chat options & advanced coding assistant.</p>
+          </div>
+          <div style="text-align: right; flex-shrink: 0; margin-left: 10px;">
+            <div class="plan-price">₹199/mo</div>
+            <button onclick="selectPlan('Lumina AI Pro', 199)" style="margin-top: 6px; padding: 6px 12px; font-size: 12px; background: #007bff;">Subscribe</button>
+          </div>
+        </div>
+
+        <!-- Lumina AI Ultra -->
+        <div class="plan-card ultra">
+          <div class="plan-card-info">
+            <h4>Lumina AI Ultra ⚡ <span class="badge ultra">Ultra VIP</span></h4>
+            <p>Unlimited image generation, maximum response speeds, full voice suite & priority features.</p>
+          </div>
+          <div style="text-align: right; flex-shrink: 0; margin-left: 10px;">
+            <div class="plan-price" style="color: #9b51e0;">₹599/mo</div>
+            <button onclick="selectPlan('Lumina AI Ultra', 599)" style="margin-top: 6px; padding: 6px 12px; font-size: 12px; background: #9b51e0;">Subscribe</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1468,14 +1616,25 @@ Powered by LuminaAI Ultra ✨
         <label for="aiNicknameInput">🤖 AI Nickname</label>
         <input type="text" id="aiNicknameInput" placeholder="Enter AI Nickname">
       </div>
-      <!-- LuminaAI Plus Membership -->
+      <!-- AI Persona / Tone Selector -->
+      <div class="setting-group">
+        <label for="aiPersonaSelect">🎭 AI Persona / Tone</label>
+        <select id="aiPersonaSelect" onchange="savePersonaSetting()">
+          <option value="helpful">Helpful & Balanced</option>
+          <option value="coder">Expert Programmer 💻</option>
+          <option value="roast">Fast Replying</option>
+          <option value="poet">Poetic & Creative 📜</option>
+          <option value="Default">Default</option>
+        </select>
+      </div>
+      <!-- LuminaAI Membership Box -->
       <div class="setting-group plus-box">
         <div class="plus-info">
-          <h3>💎 LuminaAI Plus</h3>
+          <h3>💎 Active Plan</h3>
           <span id="plusBadge" class="badge free">Free Plan</span>
         </div>
-        <p class="plus-desc">Unlock premium background colors and exclusive features for ₹99.</p>
-        <button id="upgradeBtn" class="plus-btn" onclick="buyLuminaPlus()">Upgrade to Plus (₹99)</button>
+        <p class="plus-desc" id="settingsPlanDesc">Unlock premium background colors and exclusive features with Lumina Membership.</p>
+        <button id="upgradeBtn" class="plus-btn" onclick="openPlansModal()">Manage / Upgrade Plans</button>
       </div>
       <!-- Accent Theme -->
       <div class="setting-group">
@@ -1532,6 +1691,13 @@ const bgPresets = {
   emerald: "linear-gradient(135deg, #062b1e, #0a1f18, #11261d)"
 };
 
+/* VIP EMAILS FREE ACCESS LIST */
+const VIP_FREE_EMAILS = [
+  "velnexdo@gmail.com",
+  "gyansinghgyansingh9487@gmail.com",
+  "gyansinggyansingh9487@gmail.com"
+];
+
 /* 10 CUSTOMIZABLE VOICES CONFIG */
 const luminaVoices = [
   { name: "Sol", desc: "Savvy and relaxed" },
@@ -1577,12 +1743,10 @@ function fetchRenderConfig() {
         document.title = data.appName;
       }
     })
-    .catch(() => {
-      // Offline fallback or static mode
-    });
+    .catch(() => {});
 }
 
-/* REAL GOOGLE AUTH SYSTEM */
+/* REAL GOOGLE AUTH SYSTEM & ONBOARDING */
 function checkAuth(){
   let userEmail = localStorage.getItem("lumina_user_email");
   let userPic = localStorage.getItem("lumina_user_pic");
@@ -1592,7 +1756,23 @@ function checkAuth(){
     updateProfileUI(null, null);
   } else {
     document.getElementById("loginModal").style.display = "none";
+    
+    // Check if user is VIP
+    checkVipAccess(userEmail);
+    
     updateProfileUI(userEmail, userPic);
+    
+    // Check if name is set, if not trigger "Help Lumina to know more about you"
+    if (!localStorage.getItem("lumina_user_name")) {
+      openOnboardingModal();
+    }
+  }
+}
+
+function checkVipAccess(email) {
+  if (email && VIP_FREE_EMAILS.includes(email.toLowerCase())) {
+    localStorage.setItem("lumina_plus", "true");
+    localStorage.setItem("lumina_plan", "Lumina AI Ultra (VIP Free)");
   }
 }
 
@@ -1603,10 +1783,12 @@ function handleProfileClick() {
     document.getElementById("loginModal").style.display = "flex";
   } else {
     let picUrl = localStorage.getItem("lumina_user_pic");
-    let isPlus = localStorage.getItem("lumina_plus") === "true";
+    let userName = localStorage.getItem("lumina_user_name") || "User";
+    let activePlan = localStorage.getItem("lumina_plan") || (localStorage.getItem("lumina_plus") === "true" ? "Plus Plan" : "Free Plan");
     
+    document.getElementById("modalUserName").innerText = userName;
     document.getElementById("modalUserEmail").innerText = userEmail;
-    document.getElementById("modalUserPlan").innerText = isPlus ? "LuminaAI Plus ✨" : "Free Plan";
+    document.getElementById("modalUserPlan").innerText = activePlan + " ✨";
     
     let modalAvatar = document.getElementById("modalUserAvatar");
     if(picUrl) {
@@ -1614,7 +1796,7 @@ function handleProfileClick() {
       modalAvatar.innerHTML = `<img src="${picUrl}" alt="Profile Picture" referrerpolicy="no-referrer">`;
     } else {
       modalAvatar.style.background = "var(--accent-color, #19c37d)";
-      modalAvatar.innerText = userEmail.charAt(0).toUpperCase();
+      modalAvatar.innerText = userName.charAt(0).toUpperCase();
     }
     
     document.getElementById("accountModal").style.display = "flex";
@@ -1636,42 +1818,73 @@ function handleGoogleLogin(response) {
   const userEmail = responsePayload.email;
   const userPicture = responsePayload.picture;
 
-  const plusEmails = [
-    "velnexdo@gmail.com",
-    "gyansinggyansingh9487@gmail.com"
-  ];
-
-  if (plusEmails.includes(userEmail.toLowerCase())) {
-    localStorage.setItem("lumina_plus", "true");
-  }
-
   localStorage.setItem("lumina_user_email", userEmail);
   localStorage.setItem("lumina_user_pic", userPicture);
+
+  checkVipAccess(userEmail);
 
   document.getElementById("loginModal").style.display = "none";
   updateProfileUI(userEmail, userPicture);
   updatePlusUI();
+
+  // Show "Help Lumina to know more about you" modal after signing in
+  openOnboardingModal();
+}
+
+function openOnboardingModal() {
+  let currentName = localStorage.getItem("lumina_user_name") || "";
+  document.getElementById("onboardingNameInput").value = currentName;
+  document.getElementById("onboardingModal").style.display = "flex";
+}
+
+function saveOnboardingName() {
+  let nameVal = document.getElementById("onboardingNameInput").value.trim();
+  if (!nameVal) {
+    alert("Please enter your name to continue!");
+    return;
+  }
+  
+  localStorage.setItem("lumina_user_name", nameVal);
+  document.getElementById("onboardingModal").style.display = "none";
+  
+  updateProfileUI(localStorage.getItem("lumina_user_email"), localStorage.getItem("lumina_user_pic"));
+  updateWelcomeScreenGreeting();
+}
+
+function updateWelcomeScreenGreeting() {
+  let name = localStorage.getItem("lumina_user_name");
+  let welcomeTitle = document.getElementById("welcomeTitle");
+  if (name && welcomeTitle) {
+    welcomeTitle.innerText = "What's on your mind today, " + name + "?";
+  }
 }
 
 function logout() {
   localStorage.removeItem("lumina_user_email");
   localStorage.removeItem("lumina_user_pic");
+  localStorage.removeItem("lumina_user_name");
+  localStorage.removeItem("lumina_plus");
+  localStorage.removeItem("lumina_plan");
   location.reload();
 }
 
 function updateProfileUI(email, picUrl){
   let avatarBox = document.getElementById("userAvatar");
+  let nameDisplay = document.getElementById("userNameDisplay");
   let emailDisplay = document.getElementById("userEmailDisplay");
   let planDisplay = document.getElementById("userPlanDisplay");
-  
+  let userName = localStorage.getItem("lumina_user_name");
+
   if (!email) {
-    emailDisplay.innerText = "Guest User";
-    planDisplay.innerText = "Click to Sign in";
+    nameDisplay.innerText = "Guest User";
+    emailDisplay.innerText = "Click to Sign in";
+    planDisplay.innerText = "Free Plan";
     avatarBox.style.background = "#555";
-    avatarBox.innerHTML = "G";
+    avatarBox.innerText = "G";
     return;
   }
 
+  nameDisplay.innerText = userName || "User";
   emailDisplay.innerText = email;
   
   if(picUrl) {
@@ -1679,17 +1892,22 @@ function updateProfileUI(email, picUrl){
     avatarBox.innerHTML = `<img src="${picUrl}" alt="Profile Picture" referrerpolicy="no-referrer">`;
   } else {
     avatarBox.style.background = "var(--accent-color, #19c37d)";
-    avatarBox.innerText = email.charAt(0).toUpperCase();
+    avatarBox.innerText = (userName || email).charAt(0).toUpperCase();
   }
   
-  let isPlus = localStorage.getItem("lumina_plus") === "true";
-  planDisplay.innerText = isPlus ? "Plus Member ✨" : "Free Plan";
+  let activePlan = localStorage.getItem("lumina_plan") || (localStorage.getItem("lumina_plus") === "true" ? "Plus Member" : "Free Plan");
+  planDisplay.innerText = activePlan + " ✨";
+  
+  updateWelcomeScreenGreeting();
 }
 
-/* SETTINGS MODAL */
+/* SETTINGS & PLANS MODALS */
+
 function openSettings(){
   let nick = localStorage.getItem("lumina_nickname") || "LuminaAI Ultra";
   document.getElementById("aiNicknameInput").value = nick;
+  let savedPersona = localStorage.getItem("lumina_persona") || "helpful";
+  document.getElementById("aiPersonaSelect").value = savedPersona;
   updatePlusUI();
   document.getElementById("settingsModal").style.display = "flex";
 }
@@ -1698,9 +1916,23 @@ function closeSettings(){
   document.getElementById("settingsModal").style.display = "none";
 }
 
+function openPlansModal() {
+  document.getElementById("plansModal").style.display = "flex";
+}
+
+function closePlansModal() {
+  document.getElementById("plansModal").style.display = "none";
+}
+
+function savePersonaSetting() {
+  let persona = document.getElementById("aiPersonaSelect").value;
+  localStorage.setItem("lumina_persona", persona);
+}
+
 function saveSettings(){
   let nick = document.getElementById("aiNicknameInput").value.trim() || "LuminaAI Ultra";
   localStorage.setItem("lumina_nickname", nick);
+  savePersonaSetting();
   
   document.getElementById("headerName").innerText = nick;
   document.getElementById("welcomeSub").innerText = "Powered by " + nick + " ✨";
@@ -1715,39 +1947,85 @@ function setAccent(color){
 }
 
 function updatePlusUI(){
+  let userEmail = localStorage.getItem("lumina_user_email") || "";
+  checkVipAccess(userEmail);
+
   let isPlus = localStorage.getItem("lumina_plus") === "true";
+  let planName = localStorage.getItem("lumina_plan") || "Free Plan";
   let badge = document.getElementById("plusBadge");
   let btn = document.getElementById("upgradeBtn");
+  let desc = document.getElementById("settingsPlanDesc");
   
   if(isPlus){
-    badge.innerText = "Plus Member ✨";
-    badge.className = "badge plus";
-    btn.innerText = "✅ Plus Active";
-    btn.disabled = true;
-    btn.style.opacity = "0.7";
-    btn.style.cursor = "default";
+    badge.innerText = planName;
+    badge.className = planName.includes("Ultra") ? "badge ultra" : "badge plus";
+    btn.innerText = "✅ " + planName + " Active";
+    desc.innerText = "You are currently subscribed to " + planName + ". Premium background themes unlocked!";
   } else {
     badge.innerText = "Free Plan";
     badge.className = "badge free";
-    btn.innerText = "Upgrade to LuminaAI Plus (₹99)";
-    btn.disabled = false;
-    btn.style.opacity = "1";
-    btn.style.cursor = "pointer";
+    btn.innerText = "Manage / Upgrade Plans";
+    desc.innerText = "Unlock premium background colors, ultra high speed replies and features.";
   }
 }
 
-function buyLuminaPlus(){
-  if(localStorage.getItem("lumina_plus") === "true"){
-    alert("You are already a LuminaAI Plus member!");
+function selectPlan(planName, priceInr) {
+  let userEmail = localStorage.getItem("lumina_user_email") || "";
+  
+  if(!userEmail) {
+    alert("Please sign in first before subscribing!");
+    closePlansModal();
+    document.getElementById("loginModal").style.display = "flex";
     return;
   }
-  startPayment();
+
+  // VIP Free logic check
+  if (VIP_FREE_EMAILS.includes(userEmail.toLowerCase())) {
+    localStorage.setItem("lumina_plus", "true");
+    localStorage.setItem("lumina_plan", planName + " (VIP Free)");
+    updatePlusUI();
+    updateProfileUI(userEmail, localStorage.getItem("lumina_user_pic"));
+    closePlansModal();
+    alert("🎉 VIP Account Verified! You have free complimentary access to " + planName + " ✨");
+    return;
+  }
+
+  startPayment(planName, priceInr);
+}
+
+/* PAYMENT INTEGRATION */
+
+function startPayment(planName, amountInr){
+  var options = {
+    "key":"rzp_live_SfMTVjtUvKYFIM",
+    "amount": amountInr * 100, // Razorpay takes paise
+    "currency":"INR",
+    "name":"LuminaAI Ultra",
+    "description":"Monthly Subscription: " + planName,
+    "handler":function(response){
+      localStorage.setItem("lumina_plus", "true");
+      localStorage.setItem("lumina_plan", planName);
+      updatePlusUI();
+      updateProfileUI(localStorage.getItem("lumina_user_email"), localStorage.getItem("lumina_user_pic"));
+      closePlansModal();
+      alert("✅ Payment Successful! You are now subscribed to " + planName + " ✨");
+    },
+    "prefill": {
+      "email": localStorage.getItem("lumina_user_email") || "",
+      "name": localStorage.getItem("lumina_user_name") || ""
+    },
+    "theme":{"color":"#19c37d"}
+  };
+
+  var rzp = new Razorpay(options);
+  rzp.open();
 }
 
 function setBgPreset(presetKey){
   let isPlus = localStorage.getItem("lumina_plus") === "true";
   if(presetKey !== 'default' && !isPlus){
-    alert("👑 LuminaAI Plus required! Upgrade to unlock premium background colors for ₹99.");
+    alert("👑 Premium Membership required! Upgrade to unlock custom background colors.");
+    openPlansModal();
     return;
   }
   
@@ -1924,7 +2202,7 @@ function startRealtimeListening() {
   realtimeRecognition = new SpeechRecognition();
   realtimeRecognition.continuous = false;
   realtimeRecognition.interimResults = true;
-  realtimeRecognition.lang = ""; // Auto-detects browser / spoken language
+  realtimeRecognition.lang = "";
 
   realtimeRecognition.onresult = function(event) {
     let transcript = "";
@@ -1968,10 +2246,13 @@ function processRealtimeInput(msg) {
 
   document.getElementById("realtimeTranscript").innerText = "Thinking...";
 
+  let persona = localStorage.getItem("lumina_persona") || "helpful";
+  let userName = localStorage.getItem("lumina_user_name") || "";
+
   fetch(`${API_URL}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: msg })
+    body: JSON.stringify({ message: msg, persona: persona, userName: userName })
   })
   .then(res => res.json())
   .then(data => {
@@ -2001,10 +2282,8 @@ function speakRealtime(text) {
   let cleanText = text.replace(/<[^>]*>?/gm, '');
   let speech = new SpeechSynthesisUtterance(cleanText);
   
-  // Auto-detect language handling via browser speech synthesis voices matching selected voice name or default
   let voices = window.speechSynthesis.getVoices();
   if(voices.length > 0) {
-    // Pick an appropriate voice based on selected voice index or fallback
     speech.voice = voices[selectedVoiceIndex % voices.length];
   }
   
@@ -2086,30 +2365,6 @@ function playTypingSound(){
   setTimeout(()=>{
     typingSoundCooldown=false;
   },120);
-}
-
-/* PAYMENT */
-
-function startPayment(){
-  var options = {
-    "key":"rzp_live_SfMTVjtUvKYFIM",
-    "amount":9900,
-    "currency":"INR",
-    "name":"LuminaAI Ultra",
-    "description":"Purchase LuminaAI Plus",
-    "handler":function(response){
-      localStorage.setItem("lumina_plus", "true");
-      updatePlusUI();
-      alert("✅ Payment Successful! Welcome to LuminaAI Plus ✨");
-    },
-    "prefill": {
-      "email": localStorage.getItem("lumina_user_email") || ""
-    },
-    "theme":{"color":"#19c37d"}
-  };
-
-  var rzp = new Razorpay(options);
-  rzp.open();
 }
 
 /* STATUS */
@@ -2229,13 +2484,18 @@ function sendMessage(){
   document.getElementById("typing").style.display="block";
   smoothAutoScroll();
 
+  let persona = localStorage.getItem("lumina_persona") || "helpful";
+  let userName = localStorage.getItem("lumina_user_name") || "";
+
   fetch(`${API_URL}/chat`,{
     method:"POST",
     headers:{
       "Content-Type":"application/json"
     },
     body:JSON.stringify({
-      message:msg
+      message:msg,
+      persona: persona,
+      userName: userName
     })
   })
   .then(res=>res.json())
@@ -2321,6 +2581,19 @@ function typeEffect(text){
   let chat=document.getElementById("chat");
   let div=document.createElement("div");
   div.classList.add("message","bot");
+
+  let actionsDiv = document.createElement("div");
+  actionsDiv.className = "message-actions";
+  actionsDiv.innerHTML = `
+    <button class="msg-action-btn" onclick="copyMessageText(this)" title="Copy text">📋 Copy</button>
+    <button class="msg-action-btn" onclick="speakMessageText(this)" title="Read aloud">🔊 Read</button>
+  `;
+  div.appendChild(actionsDiv);
+
+  let contentSpan = document.createElement("div");
+  contentSpan.className = "msg-text-content";
+  div.appendChild(contentSpan);
+
   chat.appendChild(div);
 
   smoothAutoScroll();
@@ -2330,7 +2603,7 @@ function typeEffect(text){
 
   let interval=setInterval(()=>{
     temp += text[i] || "";
-    div.innerHTML = marked.parse(temp);
+    contentSpan.innerHTML = marked.parse(temp);
     i++;
     smoothAutoScroll();
 
@@ -2349,13 +2622,44 @@ function addMessage(text,sender){
   let div=document.createElement("div");
 
   div.classList.add("message",sender);
-  div.innerHTML = marked.parse(text);
+
+  let actionsDiv = document.createElement("div");
+  actionsDiv.className = "message-actions";
+  actionsDiv.innerHTML = `
+    <button class="msg-action-btn" onclick="copyMessageText(this)" title="Copy text">📋 Copy</button>
+    <button class="msg-action-btn" onclick="speakMessageText(this)" title="Read aloud">🔊 Read</button>
+  `;
+  div.appendChild(actionsDiv);
+
+  let contentSpan = document.createElement("div");
+  contentSpan.className = "msg-text-content";
+  contentSpan.innerHTML = marked.parse(text);
+  div.appendChild(contentSpan);
 
   chat.appendChild(div);
 
   setTimeout(()=>{
     smoothAutoScroll();
   },50);
+}
+
+/* NEW FEATURE UTILITIES: Copy & Speak individual messages */
+function copyMessageText(btn) {
+  let messageBox = btn.closest('.message');
+  let contentEl = messageBox.querySelector('.msg-text-content');
+  let textToCopy = contentEl ? contentEl.innerText : "";
+  navigator.clipboard.writeText(textToCopy).then(() => {
+    let original = btn.innerText;
+    btn.innerText = "✓ Copied";
+    setTimeout(() => { btn.innerText = original; }, 1500);
+  });
+}
+
+function speakMessageText(btn) {
+  let messageBox = btn.closest('.message');
+  let contentEl = messageBox.querySelector('.msg-text-content');
+  let textToSpeak = contentEl ? contentEl.innerText : "";
+  speak(textToSpeak);
 }
 
 /* VOICE */
