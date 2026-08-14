@@ -5,6 +5,11 @@
 <title>LuminaAI Ultra</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
+<!-- PWA REQUIRED META TAGS & MANIFEST LINK -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#19c37d">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
+
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <!-- Google Identity Services for real account verification -->
@@ -25,7 +30,7 @@ overflow:hidden;
 }
 
 body.dark{
-font-family:"Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+font-family: var(--user-font-family, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif);
 background:#343541;
 color:white;
 display:flex;
@@ -34,7 +39,7 @@ overflow:hidden;
 }
 
 body.light{
-font-family:"Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+font-family: var(--user-font-family, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif);
 background:white;
 color:black;
 display:flex;
@@ -82,6 +87,26 @@ padding:8px;
 font-size:14px;
 }
 
+.sidebar-search-box {
+margin-bottom: 8px;
+}
+
+.sidebar-search-box input {
+width: 100%;
+padding: 8px;
+font-size: 12px;
+background: #2a2b32;
+border: 1px solid #444;
+border-radius: 6px;
+color: white;
+}
+
+body.light .sidebar-search-box input {
+background: #fff;
+color: black;
+border-color: #ccc;
+}
+
 .main{
 flex:1;
 display:flex;
@@ -101,11 +126,28 @@ border-bottom:1px solid #444;
 animation:headerSlide .5s ease;
 flex-shrink:0;
 transition: border-color 0.3s;
+position: relative;
 }
 
 .header span{
 color:var(--accent-color, #19c37d);
 text-shadow: 0 0 10px rgba(25,195,125,0.3);
+}
+
+.header-tools {
+position: absolute;
+right: 15px;
+top: 50%;
+transform: translateY(-50%);
+display: flex;
+gap: 8px;
+}
+
+.header-tools button {
+padding: 4px 8px;
+font-size: 11px;
+background: rgba(255,255,255,0.1);
+border: 1px solid rgba(255,255,255,0.2);
 }
 
 #mood{
@@ -149,7 +191,12 @@ word-wrap:break-word;
 overflow-wrap:break-word;
 line-height:1.5;
 position: relative;
-transition: transform 0.2s ease, box-shadow 0.2s ease;
+transition: transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
+}
+
+.message.pinned {
+border: 1px solid var(--accent-color, #19c37d);
+box-shadow: 0 0 10px rgba(25, 195, 125, 0.2);
 }
 
 .message:hover {
@@ -192,13 +239,38 @@ font-weight: bold;
 transform: scale(1.05);
 }
 
+.code-container {
+position: relative;
+margin: 10px 0;
+}
+
+.code-copy-btn {
+position: absolute;
+top: 6px;
+right: 6px;
+background: rgba(255,255,255,0.15);
+border: 1px solid rgba(255,255,255,0.2);
+color: #fff;
+padding: 2px 8px;
+font-size: 10px;
+border-radius: 4px;
+cursor: pointer;
+z-index: 10;
+transition: background 0.2s;
+}
+
+.code-copy-btn:hover {
+background: var(--accent-color, #19c37d);
+color: #000;
+}
+
 .message pre {
 background: #1e1e1e;
 color: #dcdcdc;
 padding: 12px;
 border-radius: 8px;
 overflow-x: auto;
-margin: 10px 0;
+margin: 0;
 font-family: 'Consolas', 'Courier New', Courier, monospace;
 font-size: 13px;
 border-left: 3px solid var(--accent-color, #19c37d);
@@ -256,9 +328,123 @@ z-index:5;
 align-items: center;
 }
 
+/* PLUS ATTACHMENT MENU & PREVIEW CONTAINER */
+.plus-menu-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.plus-menu-dropdown {
+  display: none;
+  position: absolute;
+  bottom: 50px;
+  left: 0;
+  background: #202123;
+  border: 1px solid #444;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  padding: 6px;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 100;
+  min-width: 170px;
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.light .plus-menu-dropdown {
+  background: #ffffff;
+  border-color: #ccc;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.plus-menu-dropdown.show {
+  display: flex;
+}
+
+.plus-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #fff;
+  transition: background 0.2s ease;
+}
+
+body.light .plus-menu-item {
+  color: #000;
+}
+
+.plus-menu-item:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+body.light .plus-menu-item:hover {
+  background: rgba(0,0,0,0.05);
+}
+
+.image-preview-container {
+  display: none;
+  position: absolute;
+  bottom: 68px;
+  left: 10px;
+  background: rgba(32, 33, 35, 0.95);
+  border: 1px solid var(--accent-color, #19c37d);
+  padding: 6px;
+  border-radius: 10px;
+  backdrop-filter: blur(8px);
+  z-index: 90;
+  align-items: center;
+  gap: 8px;
+}
+
+body.light .image-preview-container {
+  background: rgba(240, 240, 240, 0.95);
+}
+
+.image-preview-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.remove-img-btn {
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.input-container-wrapper {
+flex: 1;
+position: relative;
+display: flex;
+align-items: center;
+}
+
+.live-char-counter {
+position: absolute;
+right: 12px;
+font-size: 11px;
+opacity: 0.5;
+pointer-events: none;
+}
+
 input{
-flex:1;
+width:100%;
 padding:13px;
+padding-right: 75px;
 border:1px solid transparent;
 border-radius:10px;
 font-size:15px;
@@ -332,6 +518,9 @@ border-radius:8px;
 cursor:pointer;
 transition:all .3s cubic-bezier(0.16, 1, 0.3, 1);
 animation:fadeIn .4s ease;
+display: flex;
+justify-content: space-between;
+align-items: center;
 }
 
 .history div:hover{
@@ -654,6 +843,10 @@ body.light .modal-footer {
   padding: 10px;
   border-radius: 8px;
   transition: border-color 0.2s;
+}
+
+.setting-group input[type="range"] {
+  width: 100%;
 }
 
 .setting-group input[type="text"]:focus,
@@ -1119,6 +1312,42 @@ body.light .voice-card {
   opacity: 0.75;
 }
 
+/* TEMPLATE MODAL CARD LIST */
+.template-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.template-card {
+  background: #2a2b32;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+body.light .template-card {
+  background: #f4f4f4;
+  border: 1px solid #ccc;
+}
+
+.template-card:hover {
+  border-color: var(--accent-color, #19c37d);
+}
+
+.template-title {
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.template-desc {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
 @keyframes sidebarSlide{
 from{
 opacity:0;
@@ -1263,6 +1492,10 @@ border-bottom:1px solid #444;
 
 .sidebar-top-controls {
 margin-bottom:0;
+}
+
+.sidebar-search-box {
+display: none;
 }
 
 .sidebar button{
@@ -1461,7 +1694,7 @@ font-size:12px;
 </style>
 </head>
 
-<body class="dark" onload="initApp()">
+<body class="dark" onclick="closePlusMenu(event)" onload="initApp()">
 
 <div class="sidebar">
 
@@ -1470,6 +1703,11 @@ font-size:12px;
 <button onclick="newChat()" title="New Chat">➕</button>
 <button onclick="clearChat()" title="Clear Chat">🧹</button>
 <button onclick="openSettings()" title="Settings">⚙️</button>
+</div>
+
+<!-- FEATURE: SEARCH CHAT HISTORY -->
+<div class="sidebar-search-box">
+  <input type="text" id="historySearch" placeholder="🔍 Search History..." oninput="filterHistory()">
 </div>
 
 <div id="history" class="history"></div>
@@ -1494,6 +1732,10 @@ font-size:12px;
 
 <div class="header">
 🤖 <span id="headerName">LuminaAI Ultra</span>
+<!-- FEATURE: AUTO-SCROLL TOGGLE -->
+<div class="header-tools">
+  <button id="scrollToggleBtn" onclick="toggleAutoScroll()" title="Toggle Auto Scroll">📜 Scroll: ON</button>
+</div>
 </div>
 
 <div id="mood">
@@ -1557,7 +1799,32 @@ Powered by LuminaAI Ultra ✨
 
 <div id="suggestions"></div>
 
+<!-- ATTACHED IMAGE PREVIEW CONTAINER -->
+<div id="imagePreviewContainer" class="image-preview-container">
+  <img id="imagePreviewThumb" class="image-preview-thumb" src="" alt="Attached Image">
+  <button class="remove-img-btn" onclick="removeAttachedImage()" title="Remove image">✕</button>
+</div>
+
 <div class="input-area">
+
+<!-- PLUS DROPDOWN MENU FOR FILE & IMAGE UPLOAD -->
+<div class="plus-menu-wrapper">
+  <button onclick="togglePlusMenu(event)" title="Add attachment or files">➕</button>
+  <div id="plusMenuDropdown" class="plus-menu-dropdown">
+    <div class="plus-menu-item" onclick="triggerImageUpload()">
+      <span>📷</span>
+      <span>Upload Image</span>
+    </div>
+    <div class="plus-menu-item" onclick="triggerFileUpload()">
+      <span>📁</span>
+      <span>Upload Files</span>
+    </div>
+  </div>
+</div>
+
+<!-- HIDDEN INPUTS FOR FILE HANDLING -->
+<input type="file" id="imageFileInput" accept="image/*" style="display: none;" onchange="handleImageSelection(event)">
+<input type="file" id="documentFileInput" accept="*/*" style="display: none;" onchange="handleFileSelection(event)">
 
 <button onclick="startListening()" title="Voice Input">🎤</button>
 
@@ -1565,14 +1832,50 @@ Powered by LuminaAI Ultra ✨
 
 <button onclick="generateImage()" title="Generate Image">🖼</button>
 
+<!-- FEATURE: PROMPT TEMPLATES DRAWER BUTTON -->
+<button onclick="openTemplateModal()" title="Prompt Templates">📄</button>
+
 <button onclick="openPlansModal()" title="Upgrade Plan">💎</button>
 
-<input id="message" placeholder="Ask anything..." oninput="playTypingSound()">
+<div class="input-container-wrapper">
+  <input id="message" placeholder="Ask anything or analyze attached images..." oninput="handleInputTyping()">
+  <span id="liveCounter" class="live-char-counter">0 ch</span>
+</div>
 
 <button onclick="sendMessage()">Send</button>
 
 </div>
 
+</div>
+
+<!-- FEATURE: PROMPT TEMPLATES MODAL -->
+<div id="templateModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>📄 Quick Prompt Templates</h2>
+      <span class="close-btn" onclick="document.getElementById('templateModal').style.display='none'">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="template-grid">
+        <div class="template-card" onclick="applyTemplate('Summarize the key points of the following text in bullet points:\n\n[Paste text here]')">
+          <div class="template-title">📌 Executive Summary</div>
+          <div class="template-desc">Extract bulleted key insights from long texts.</div>
+        </div>
+        <div class="template-card" onclick="applyTemplate('Review the following code for bugs, performance issues, and best practices:\n\n[Paste code here]')">
+          <div class="template-title">🛠️ Code Auditor & Bug Finder</div>
+          <div class="template-desc">Find syntax bugs, performance bottlenecks & fixes.</div>
+        </div>
+        <div class="template-card" onclick="applyTemplate('Write a creative and catchy social media post about:\n\n[Insert topic]')">
+          <div class="template-title">📲 Social Media Post Creator</div>
+          <div class="template-desc">Craft engaging captions with emojis and hashtags.</div>
+        </div>
+        <div class="template-card" onclick="applyTemplate('Explain the concept of [Topic] as if I were a 10-year-old.')">
+          <div class="template-title">🧠 Explain Like I\'m 10</div>
+          <div class="template-desc">Simplify complex scientific or technical topics.</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- REAL-TIME VOICE CHAT OVERLAY -->
@@ -1771,6 +2074,27 @@ Powered by LuminaAI Ultra ✨
           <option value="Default">Default</option>
         </select>
       </div>
+
+      <!-- FEATURE: FONT FAMILY SELECTOR -->
+      <div class="setting-group">
+        <label for="userFontSelect">🔤 Font Style</label>
+        <select id="userFontSelect" onchange="applyUserFont(this.value)">
+          <option value="default">System Modern (Segoe UI / Sans-Serif)</option>
+          <option value="monospace">Developer Monospace</option>
+          <option value="dyslexic">Clean & Readable (Arial / Trebuchet)</option>
+        </select>
+      </div>
+
+      <!-- FEATURE: TTS VOICE SPEED & PITCH SLIDERS -->
+      <div class="setting-group">
+        <label>🔊 Voice Speech Rate (<span id="rateVal">1.0</span>x)</label>
+        <input type="range" id="voiceRate" min="0.5" max="2" step="0.1" value="1" oninput="document.getElementById('rateVal').innerText=this.value">
+      </div>
+      <div class="setting-group">
+        <label>🎵 Voice Pitch (<span id="pitchVal">1.0</span>)</label>
+        <input type="range" id="voicePitch" min="0.5" max="1.5" step="0.1" value="1" oninput="document.getElementById('pitchVal').innerText=this.value">
+      </div>
+
       <!-- LuminaAI Membership Box -->
       <div class="setting-group plus-box">
         <div class="plus-info">
@@ -1821,6 +2145,10 @@ Powered by LuminaAI Ultra ✨
 let typingSoundCooldown = false;
 let currentMood = "neutral";
 let thinkingInterval = null;
+let isAutoScrollEnabled = true;
+
+/* ATTACHED IMAGE BASE64 STATE */
+let pendingAttachedImageBase64 = null;
 
 const API_URL = window.location.origin;
 
@@ -1875,6 +2203,161 @@ renderHistory();
 updateCounter();
 updateWelcomeScreen();
 initVoiceSelectorUI();
+configureMarkedRenderer();
+registerServiceWorker();
+let savedFont = localStorage.getItem("lumina_font_preset") || "default";
+applyUserFont(savedFont);
+}
+
+/* PLUS MENU & FILE ANALYSIS SYSTEM LOGIC */
+
+function togglePlusMenu(e) {
+  e.stopPropagation();
+  let menu = document.getElementById("plusMenuDropdown");
+  menu.classList.toggle("show");
+}
+
+function closePlusMenu(e) {
+  let menu = document.getElementById("plusMenuDropdown");
+  if(menu && menu.classList.contains("show")) {
+    menu.classList.remove("show");
+  }
+}
+
+function triggerImageUpload() {
+  closePlusMenu({ stopPropagation: ()=>{} });
+  document.getElementById("imageFileInput").click();
+}
+
+function triggerFileUpload() {
+  closePlusMenu({ stopPropagation: ()=>{} });
+  document.getElementById("documentFileInput").click();
+}
+
+function handleImageSelection(event) {
+  let file = event.target.files[0];
+  if(!file) return;
+
+  if(file.size > 5 * 1024 * 1024) {
+    alert("Image size should be less than 5MB.");
+    return;
+  }
+
+  let reader = new FileReader();
+  reader.onload = function(e) {
+    pendingAttachedImageBase64 = e.target.result;
+    
+    // Display preview thumbnail
+    let thumb = document.getElementById("imagePreviewThumb");
+    thumb.src = pendingAttachedImageBase64;
+    document.getElementById("imagePreviewContainer").style.display = "flex";
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleFileSelection(event) {
+  let file = event.target.files[0];
+  if(!file) return;
+
+  let reader = new FileReader();
+  reader.onload = function(e) {
+    let content = e.target.result;
+    let input = document.getElementById("message");
+    input.value = `[File attached: ${file.name}]\n` + content.substring(0, 3000);
+    handleInputTyping();
+  };
+  
+  if (file.type.startsWith("text/") || file.name.endsWith(".txt") || file.name.endsWith(".js") || file.name.endsWith(".json") || file.name.endsWith(".py") || file.name.endsWith(".html") || file.name.endsWith(".css")) {
+    reader.readAsText(file);
+  } else {
+    alert("Attached document file name: " + file.name);
+  }
+}
+
+function removeAttachedImage() {
+  pendingAttachedImageBase64 = null;
+  document.getElementById("imagePreviewContainer").style.display = "none";
+  document.getElementById("imageFileInput").value = "";
+}
+
+/* FEATURE: FONT MANAGEMENT */
+function applyUserFont(fontKey) {
+  let fontValue = '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
+  if(fontKey === "monospace") {
+    fontValue = "'Consolas', 'Courier New', Courier, monospace";
+  } else if(fontKey === "dyslexic") {
+    fontValue = "Arial, Helvetica, 'Trebuchet MS', sans-serif";
+  }
+  document.documentElement.style.setProperty('--user-font-family', fontValue);
+  localStorage.setItem("lumina_font_preset", fontKey);
+}
+
+/* FEATURE: PROMPT TEMPLATES UI LOGIC */
+function openTemplateModal() {
+  document.getElementById("templateModal").style.display = "flex";
+}
+
+function applyTemplate(text) {
+  let input = document.getElementById("message");
+  input.value = text;
+  document.getElementById("templateModal").style.display = "none";
+  input.focus();
+  handleInputTyping();
+}
+
+/* FEATURE: LIVE TYPING INPUT COUNTER & SOUND */
+function handleInputTyping() {
+  playTypingSound();
+  let val = document.getElementById("message").value;
+  let counter = document.getElementById("liveCounter");
+  if(counter) {
+    counter.innerText = val.length + " ch";
+  }
+}
+
+/* SERVICE WORKER REGISTRATION FOR PWA */
+function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('PWA Service Worker registered:', reg))
+        .catch(err => console.error('PWA Service Worker registration failed:', err));
+    });
+  }
+}
+
+/* CUSTOM MARKED RENDERER FOR CODE BLOCK COPY BUTTONS */
+function configureMarkedRenderer() {
+  const renderer = new marked.Renderer();
+  renderer.code = function(code, language) {
+    const validLang = language || 'code';
+    const escapedCode = code.replace(/'/g, "\\'").replace(/\n/g, "\\n");
+    return `
+      <div class="code-container">
+        <button class="code-copy-btn" onclick="copyCodeSnippet(this)">Copy Code</button>
+        <pre><code class="language-${validLang}">${code}</code></pre>
+      </div>
+    `;
+  };
+  marked.setOptions({ renderer: renderer });
+}
+
+function copyCodeSnippet(btn) {
+  let pre = btn.nextElementSibling;
+  let code = pre ? pre.innerText : "";
+  navigator.clipboard.writeText(code).then(() => {
+    let original = btn.innerText;
+    btn.innerText = "✓ Copied!";
+    setTimeout(() => { btn.innerText = original; }, 1500);
+  });
+}
+
+function toggleAutoScroll() {
+  isAutoScrollEnabled = !isAutoScrollEnabled;
+  let btn = document.getElementById("scrollToggleBtn");
+  if(btn) {
+    btn.innerText = "📜 Scroll: " + (isAutoScrollEnabled ? "ON" : "OFF");
+  }
 }
 
 /* FETCH RENDER BACKEND CONFIG */
@@ -2053,6 +2536,15 @@ function openSettings(){
   document.getElementById("aiNicknameInput").value = nick;
   let savedPersona = localStorage.getItem("lumina_persona") || "helpful";
   document.getElementById("aiPersonaSelect").value = savedPersona;
+  
+  let savedFont = localStorage.getItem("lumina_font_preset") || "default";
+  document.getElementById("userFontSelect").value = savedFont;
+
+  document.getElementById("voiceRate").value = localStorage.getItem("lumina_v_rate") || "1";
+  document.getElementById("rateVal").innerText = document.getElementById("voiceRate").value;
+  document.getElementById("voicePitch").value = localStorage.getItem("lumina_v_pitch") || "1";
+  document.getElementById("pitchVal").innerText = document.getElementById("voicePitch").value;
+
   updatePlusUI();
   document.getElementById("settingsModal").style.display = "flex";
 }
@@ -2079,6 +2571,9 @@ function saveSettings(){
   localStorage.setItem("lumina_nickname", nick);
   savePersonaSetting();
   
+  localStorage.setItem("lumina_v_rate", document.getElementById("voiceRate").value);
+  localStorage.setItem("lumina_v_pitch", document.getElementById("voicePitch").value);
+
   document.getElementById("headerName").innerText = nick;
   document.getElementById("welcomeSub").innerText = "Powered by " + nick + " ✨";
   document.title = nick;
@@ -2426,6 +2921,9 @@ function speakRealtime(text) {
   
   let cleanText = text.replace(/<[^>]*>?/gm, '');
   let speech = new SpeechSynthesisUtterance(cleanText);
+
+  speech.rate = parseFloat(localStorage.getItem("lumina_v_rate") || "1");
+  speech.pitch = parseFloat(localStorage.getItem("lumina_v_pitch") || "1");
   
   let voices = window.speechSynthesis.getVoices();
   if(voices.length > 0) {
@@ -2472,6 +2970,7 @@ function updateWelcomeScreen(){
 
 function setPrompt(text){
   document.getElementById("message").value = text;
+  handleInputTyping();
   sendMessage();
 }
 
@@ -2541,6 +3040,7 @@ function showSuggestions(){
     b.innerText=s;
     b.onclick=()=>{
       document.getElementById("message").value=s;
+      handleInputTyping();
       sendMessage();
     };
     box.appendChild(b);
@@ -2576,7 +3076,7 @@ function clearChat(){
   updateWelcomeScreen();
 }
 
-/* HISTORY */
+/* HISTORY & FILTERING */
 
 function renderHistory(){
   let h=document.getElementById("history");
@@ -2584,10 +3084,41 @@ function renderHistory(){
 
   chats.forEach((c,i)=>{
     let d=document.createElement("div");
-    d.innerText="Chat "+(i+1);
+    
+    // Feature: Display actual text preview or index
+    let titleText = "Chat " + (i + 1);
+    if(c.length > 0 && c[0].text) {
+      let preview = c[0].text.substring(0, 18);
+      titleText += ": " + preview + (c[0].text.length > 18 ? "..." : "");
+    }
+    
+    d.innerHTML = `
+      <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${titleText}</span>
+      <span onclick="deleteChatEntry(event, ${i})" style="color:#ff5555; margin-left:6px; cursor:pointer;" title="Delete Chat">✕</span>
+    `;
     d.onclick=()=>loadChat(i);
     h.appendChild(d);
   });
+}
+
+function filterHistory() {
+  let val = document.getElementById("historySearch").value.toLowerCase();
+  let h = document.getElementById("history");
+  let divs = h.getElementsByTagName("div");
+
+  for(let i = 0; i < divs.length; i++) {
+    let text = divs[i].innerText.toLowerCase();
+    divs[i].style.display = text.includes(val) ? "flex" : "none";
+  }
+}
+
+function deleteChatEntry(e, index) {
+  e.stopPropagation();
+  if(confirm("Delete this chat from history?")) {
+    chats.splice(index, 1);
+    save();
+    renderHistory();
+  }
 }
 
 function loadChat(i){
@@ -2636,19 +3167,28 @@ function sendMessage(){
   let input=document.getElementById("message");
   let msg=input.value.trim();
 
-  if(!msg) return;
+  if(!msg && !pendingAttachedImageBase64) return;
 
-  addMessage(msg,"user");
+  let displayMsg = msg;
+  let sentImage = pendingAttachedImageBase64;
+
+  if(sentImage) {
+    displayMsg = `<img src="${sentImage}" style="max-width:280px; border-radius:10px; display:block; margin-bottom:8px;"><br>` + (msg || "Analyze this image");
+  }
+
+  addMessage(displayMsg, "user");
 
   currentChat.push({
-    text:msg,
-    sender:"user"
+    text: displayMsg,
+    sender: "user"
   });
 
   updateWelcomeScreen();
   save();
 
   input.value="";
+  handleInputTyping();
+  removeAttachedImage();
 
   document.getElementById("typing").style.display="block";
   startThinkingAnimation();
@@ -2663,7 +3203,8 @@ function sendMessage(){
       "Content-Type":"application/json"
     },
     body:JSON.stringify({
-      message:msg,
+      message: msg || "Analyze this attached image.",
+      image: sentImage,
       persona: persona,
       userName: userName
     })
@@ -2701,6 +3242,7 @@ function updateSuggestions(list){
     b.innerText=s;
     b.onclick=()=>{
       document.getElementById("message").value=s;
+      handleInputTyping();
       sendMessage();
     };
     box.appendChild(b);
@@ -2738,6 +3280,7 @@ function generateImage(){
 /* SMOOTH AUTO SCROLL */
 
 function smoothAutoScroll(){
+  if(!isAutoScrollEnabled) return;
   let chat = document.getElementById("chat");
   requestAnimationFrame(()=>{
     chat.scrollTo({
@@ -2757,6 +3300,7 @@ function typeEffect(text){
   let actionsDiv = document.createElement("div");
   actionsDiv.className = "message-actions";
   actionsDiv.innerHTML = `
+    <button class="msg-action-btn" onclick="togglePinMessage(this)" title="Bookmark/Pin Message">📌 Pin</button>
     <button class="msg-action-btn" onclick="copyMessageText(this)" title="Copy text">📋 Copy</button>
     <button class="msg-action-btn" onclick="speakMessageText(this)" title="Read aloud">🔊 Read</button>
   `;
@@ -2798,6 +3342,7 @@ function addMessage(text,sender){
   let actionsDiv = document.createElement("div");
   actionsDiv.className = "message-actions";
   actionsDiv.innerHTML = `
+    <button class="msg-action-btn" onclick="togglePinMessage(this)" title="Bookmark/Pin Message">📌 Pin</button>
     <button class="msg-action-btn" onclick="copyMessageText(this)" title="Copy text">📋 Copy</button>
     <button class="msg-action-btn" onclick="speakMessageText(this)" title="Read aloud">🔊 Read</button>
   `;
@@ -2815,7 +3360,18 @@ function addMessage(text,sender){
   },50);
 }
 
-/* NEW FEATURE UTILITIES: Copy & Speak individual messages */
+/* FEATURE: PIN / BOOKMARK MESSAGE */
+function togglePinMessage(btn) {
+  let messageBox = btn.closest('.message');
+  messageBox.classList.toggle('pinned');
+  if(messageBox.classList.contains('pinned')) {
+    btn.innerText = "📌 Pinned";
+  } else {
+    btn.innerText = "📌 Pin";
+  }
+}
+
+/* UTILITIES: Copy & Speak individual messages */
 function copyMessageText(btn) {
   let messageBox = btn.closest('.message');
   let contentEl = messageBox.querySelector('.msg-text-content');
@@ -2841,6 +3397,10 @@ function speak(text){
     window.speechSynthesis.cancel();
     let cleanText = text.replace(/<[^>]*>?/gm, '');
     let speech = new SpeechSynthesisUtterance(cleanText);
+
+    speech.rate = parseFloat(localStorage.getItem("lumina_v_rate") || "1");
+    speech.pitch = parseFloat(localStorage.getItem("lumina_v_pitch") || "1");
+
     let voices = window.speechSynthesis.getVoices();
     if(voices.length > 0) {
       speech.voice = voices[selectedVoiceIndex % voices.length];
@@ -2863,6 +3423,7 @@ function startListening(){
 
   recognition.onresult=function(event){
     document.getElementById("message").value = event.results[0][0].transcript;
+    handleInputTyping();
   };
 }
 
