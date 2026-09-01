@@ -24,7 +24,7 @@ if not IMAGE_API_KEY:
 # MODELS
 # ==================================================
 
-CHAT_MODEL = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
+CHAT_MODEL = "nvidia/nemotron-3.5-content-safety:free"
 
 IMAGE_MODEL = "recraft/recraft-v4-pro"
 
