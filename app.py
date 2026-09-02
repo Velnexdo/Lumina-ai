@@ -24,7 +24,7 @@ if not IMAGE_API_KEY:
 # MODELS
 # ==================================================
 
-CHAT_MODEL = "nvidia/nemotron-3.5-content-safety:free"
+CHAT_MODEL = "poolside/laguna-xs-2.1:free"
 
 IMAGE_MODEL = "recraft/recraft-v4-pro"
 
