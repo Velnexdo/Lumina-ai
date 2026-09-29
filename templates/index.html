@@ -107,6 +107,8 @@ animation:bgMove 10s infinite alternate ease-in-out;
 
 .sidebar{
 width:260px;
+min-width:260px;
+flex:0 0 260px;
 background:#202123;
 padding:10px;
 display:flex;
@@ -116,7 +118,7 @@ animation:sidebarSlide .5s cubic-bezier(0.16,1,0.3,1);
 overflow:hidden;
 }
 
-body.light .sidebar{
+body.light.sidebar{
 background:#f1f1f1;
 }
 
@@ -153,7 +155,8 @@ border-color:#ccc;
 }
 
 .main{
-flex:1;
+flex:1 1 auto;
+min-width:0;
 display:flex;
 flex-direction:column;
 position:relative;
@@ -1576,22 +1579,66 @@ font-size:12px;
 
 }
 
+
+/* Custom Lumina icon styling */
+.li-icon{width:1em;height:1em;display:inline-block;vertical-align:-0.14em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;}
+button .li-icon{pointer-events:none;}
+.li-icon.icon-fill{fill:currentColor;stroke:currentColor;}
 </style>
 </head>
 
 <body class="dark" onload="initApp()">
+<!-- LUMINA CUSTOM ICON SYSTEM: handcrafted inline SVG icons; no native emoji glyphs. -->
+<svg id="luminaIconSprite" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+  <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M20 15.2A8.6 8.6 0 0 1 8.8 4 8.6 8.6 0 1 0 20 15.2Z"/></symbol>
+  <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="icon-broom" viewBox="0 0 24 24"><path d="m14 4 6 6M4 20l7-7m-3 7 9-9M5 16l3 3M14 4l-3 3 6 6 3-3-6-6Z"/></symbol>
+  <symbol id="icon-gear" viewBox="0 0 24 24"><path d="M9.6 3.8 10.5 2h3l.9 1.8 2 .9 1.9-.6 2.1 2.1-.6 1.9.9 2 .2.1v3l-2 .9-.9 2 .6 1.9-2.1 2.1-1.9-.6-2 .9-.9 1.9h-3l-.9-1.9-2-.9-1.9.6-2.1-2.1.6-1.9-.9-2L2 13.6v-3l2-.9.9-2-.6-1.9 2.1-2.1 1.9.6 2-.9Z"/><circle cx="12" cy="12" r="3.2"/></symbol>
+  <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.5"/><path d="m16 16 5 5"/></symbol>
+  <symbol id="icon-bot" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="4"/><path d="M12 7V4M9 4h6M8 13h.01M16 13h.01M8 17h8"/></symbol>
+  <symbol id="icon-scroll" viewBox="0 0 24 24"><path d="M7 4h10v16H7zM9 8h6M9 12h6M9 16h4"/></symbol>
+  <symbol id="icon-sparkle" viewBox="0 0 24 24"><path d="m12 2 1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2ZM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z"/></symbol>
+  <symbol id="icon-space" viewBox="0 0 24 24"><path d="M4 20c4-1 7-4 8-8 1-4 4-7 8-8-1 4-4 7-8 8-1 4-4 7-8 8Z"/><path d="M7 7h.01M17 17h.01M5 12h.01"/></symbol>
+  <symbol id="icon-code" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></symbol>
+  <symbol id="icon-smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14c1 2 7 2 8 0M9 9h.01M15 9h.01"/></symbol>
+  <symbol id="icon-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 18 5-5 3 3 2-2 6 5"/></symbol>
+  <symbol id="icon-mic" viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="12" rx="4"/><path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v3M8 22h8"/></symbol>
+  <symbol id="icon-doc" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v5h5M9 12h6M9 16h6"/></symbol>
+  <symbol id="icon-diamond" viewBox="0 0 24 24"><path d="m3 8 4-5h10l4 5-9 13L3 8Z"/><path d="M3 8h18M8 3l4 18 4-18M7 8l5-5 5 5"/></symbol>
+  <symbol id="icon-pin" viewBox="0 0 24 24"><path d="m8 4 8 8M9 3l12 12-4 1-4 5-1-7-5-4 2-2Z"/></symbol>
+  <symbol id="icon-wrench" viewBox="0 0 24 24"><path d="M14 5a5 5 0 0 0-6 6l-5 5a2 2 0 0 0 3 3l5-5a5 5 0 0 0 6-6l-3 3-3-1-1-3 4-2Z"/></symbol>
+  <symbol id="icon-mobile" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M10 6h4M10 18h4"/></symbol>
+  <symbol id="icon-brain" viewBox="0 0 24 24"><path d="M9 5a3 3 0 0 0-5 2 3 3 0 0 0 1 5 3 3 0 0 0 2 5 3 3 0 0 0 5 2V5a3 3 0 0 0-3 0Zm6 0a3 3 0 0 1 5 2 3 3 0 0 1-1 5 3 3 0 0 1-2 5 3 3 0 0 1-5 2V5a3 3 0 0 1 3 0Z"/><path d="M8 9h2M14 9h2M7 14h3M14 14h3"/></symbol>
+  <symbol id="icon-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="icon-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="icon-pencil" viewBox="0 0 24 24"><path d="m4 20 1-5L16 4l4 4L9 19l-5 1Z"/><path d="m14 6 4 4"/></symbol>
+  <symbol id="icon-crown" viewBox="0 0 24 24"><path d="m3 7 5 4 4-7 4 7 5-4-2 12H5L3 7Z"/><path d="M6 22h12"/></symbol>
+  <symbol id="icon-bolt" viewBox="0 0 24 24"><path d="m13 2-9 12h7l-1 8 9-12h-7l1-8Z"/></symbol>
+  <symbol id="icon-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0 0 18h2.2a2 2 0 0 0 0-4H13a2 2 0 0 1 0-4h3a5 5 0 0 0 5-5 9 9 0 0 0-9-5Z"/><circle cx="7.5" cy="10" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14" cy="6.5" r="1"/><circle cx="17" cy="9" r="1"/></symbol>
+  <symbol id="icon-speaker" viewBox="0 0 24 24"><path d="M4 10h4l5-4v12l-5-4H4zM17 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></symbol>
+  <symbol id="icon-music" viewBox="0 0 24 24"><path d="M9 18V6l10-2v12M9 9l10-2"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/></symbol>
+  <symbol id="icon-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+  <symbol id="icon-save" viewBox="0 0 24 24"><path d="M5 3h12l3 3v15H5z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/></symbol>
+  <symbol id="icon-warning" viewBox="0 0 24 24"><path d="M12 3 2 21h20L12 3Z"/><path d="M12 9v5M12 18h.01"/></symbol>
+  <symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+  <symbol id="icon-mute" viewBox="0 0 24 24"><path d="M4 10h4l5-4v12l-5-4H4zM17 9l4 6M21 9l-4 6"/></symbol>
+  <symbol id="icon-online" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="icon-offline" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M9 9l6 6M15 9l-6 6"/></symbol>
+  <symbol id="icon-close" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></symbol>
+</svg>
+
 
 <div class="sidebar">
 
 <div class="sidebar-top-controls">
-<button onclick="toggleTheme()" title="Toggle Theme">🌙</button>
-<button onclick="newChat()" title="New Chat">➕</button>
-<button onclick="clearChat()" title="Clear Chat">🧹</button>
-<button onclick="openSettings()" title="Settings">⚙️</button>
+<button onclick="toggleTheme()" title="Toggle Theme"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-moon'></use></svg></button>
+<button onclick="newChat()" title="New Chat"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-plus'></use></svg></button>
+<button onclick="clearChat()" title="Clear Chat"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-broom'></use></svg></button>
+<button onclick="openSettings()" title="Settings"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-gear'></use></svg></button>
 </div>
 
 <div class="sidebar-search-box">
-<input type="text" id="historySearch" placeholder="🔍 Search History..." oninput="filterHistory()">
+<input type="text" id="historySearch" placeholder="Search History..." oninput="filterHistory()">
 </div>
 
 <div id="history" class="history"></div>
@@ -1614,10 +1661,10 @@ font-size:12px;
 <div class="main">
 
 <div class="header">
-🤖 <span id="headerName">Lumina AI</span>
+<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-bot'></use></svg> <span id="headerName">Lumina AI</span>
 
 <div class="header-tools">
-<button id="scrollToggleBtn" onclick="toggleAutoScroll()" title="Toggle Auto Scroll">📜 Scroll: ON</button>
+<button id="scrollToggleBtn" onclick="toggleAutoScroll()" title="Toggle Auto Scroll"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-scroll'></use></svg> Scroll: ON</button>
 </div>
 
 </div>
@@ -1635,28 +1682,28 @@ Ask Lumina — Lumina AI
 </div>
 
 <div class="welcome-sub" id="welcomeSub">
-Ask Lumina anything with Lumina AI — coding, learning, creativity, questions and more. ✨
+Ask Lumina anything with Lumina AI — coding, learning, creativity, questions and more. <svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-sparkle'></use></svg>
 </div>
 
 <div class="quick-grid">
 
 <div class="quick-card" onclick="setPrompt('Explain black holes simply')">
-<h3>🌌 Explain Concepts</h3>
+<h3><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-space'></use></svg> Explain Concepts</h3>
 <p>Ask AI to explain science, coding, space & more.</p>
 </div>
 
 <div class="quick-card" onclick="setPrompt('Write a Roblox script')">
-<h3>💻 Coding Help</h3>
+<h3><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-code'></use></svg> Coding Help</h3>
 <p>Create scripts, websites and advanced projects.</p>
 </div>
 
 <div class="quick-card" onclick="setPrompt('Tell me a funny joke')">
-<h3>😂 Entertainment</h3>
+<h3><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-smile'></use></svg> Entertainment</h3>
 <p>Get jokes, stories, fun facts and games.</p>
 </div>
 
 <div class="quick-card" onclick="setPrompt('Generate a futuristic city image')">
-<h3>🖼 Image Ideas</h3>
+<h3><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-image'></use></svg> Image Ideas</h3>
 <p>Create AI images and cinematic concepts.</p>
 </div>
 
@@ -1686,18 +1733,18 @@ Ask Lumina anything with Lumina AI — coding, learning, creativity, questions a
 
 <div class="input-area">
 
-<button onclick="startListening()" title="Voice Input">🎤</button>
+<button onclick="startListening()" title="Voice Input"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-mic'></use></svg></button>
 
-<button onclick="openRealtimeChat()" title="Real-time Voice Chat" style="background:linear-gradient(135deg,#6b11ff,#00d2ff);display:flex;align-items:center;justify-content:center;font-size:16px;">🎙️</button>
+<button onclick="openRealtimeChat()" title="Real-time Voice Chat" style="background:linear-gradient(135deg,#6b11ff,#00d2ff);display:flex;align-items:center;justify-content:center;font-size:16px;"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-mic'></use></svg></button>
 
-<button onclick="generateImage()" title="Generate Image">🖼</button>
+<button onclick="generateImage()" title="Generate Image"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-image'></use></svg></button>
 
-<button onclick="openTemplateModal()" title="Prompt Templates">📄</button>
+<button onclick="openTemplateModal()" title="Prompt Templates"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-doc'></use></svg></button>
 
-<button onclick="openPlansModal()" title="Upgrade Plan">💎</button>
+<button onclick="openPlansModal()" title="Upgrade Plan"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-diamond'></use></svg></button>
 
 <div class="input-container-wrapper">
-<input id="message" placeholder="Ask anything..." oninput="handleInputTyping">
+<input id="message" placeholder="Ask anything..." oninput="handleInputTyping()">
 <span id="liveCounter" class="live-char-counter">0 ch</span>
 </div>
 
@@ -1714,7 +1761,7 @@ Ask Lumina anything with Lumina AI — coding, learning, creativity, questions a
 <div class="modal-content">
 
 <div class="modal-header">
-<h2>📄 Quick Prompt Templates</h2>
+<h2><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-doc'></use></svg> Quick Prompt Templates</h2>
 <span class="close-btn" onclick="document.getElementById('templateModal').style.display='none'">&times;</span>
 </div>
 
@@ -1723,22 +1770,22 @@ Ask Lumina anything with Lumina AI — coding, learning, creativity, questions a
 <div class="template-grid">
 
 <div class="template-card" onclick="applyTemplate('Summarize the key points of the following text in bullet points:\n\n[Paste text here]')">
-<div class="template-title">📌 Executive Summary</div>
+<div class="template-title"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-pin'></use></svg> Executive Summary</div>
 <div class="template-desc">Extract bulleted key insights from long texts.</div>
 </div>
 
 <div class="template-card" onclick="applyTemplate('Review the following code for bugs, performance issues, and best practices:\n\n[Paste code here]')">
-<div class="template-title">🛠️ Code Auditor & Bug Finder</div>
+<div class="template-title"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-wrench'></use></svg> Code Auditor & Bug Finder</div>
 <div class="template-desc">Find syntax bugs, performance bottlenecks & fixes.</div>
 </div>
 
 <div class="template-card" onclick="applyTemplate('Write a creative and catchy social media post about:\n\n[Insert topic]')">
-<div class="template-title">📲 Social Media Post Creator</div>
+<div class="template-title"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-mobile'></use></svg> Social Media Post Creator</div>
 <div class="template-desc">Craft engaging captions with emojis and hashtags.</div>
 </div>
 
 <div class="template-card" onclick="applyTemplate('Explain the concept of [Topic] as if I were a 10-year-old.')">
-<div class="template-title">🧠 Explain Like I'm 10</div>
+<div class="template-title"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-brain'></use></svg> Explain Like I'm 10</div>
 <div class="template-desc">Simplify complex scientific or technical topics.</div>
 </div>
 
@@ -1753,7 +1800,7 @@ Ask Lumina anything with Lumina AI — coding, learning, creativity, questions a
 <div id="realtimeOverlay" class="modal">
 
 <div class="realtime-top">
-<button class="realtime-btn btn-close-realtime" onclick="closeRealtimeChat()" title="Close">✕</button>
+<button class="realtime-btn btn-close-realtime" onclick="closeRealtimeChat()" title="Close"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-close'></use></svg></button>
 </div>
 
 <div class="realtime-content">
@@ -1783,7 +1830,7 @@ Listening... Speak now or type below
 <div class="realtime-controls">
 
 <button id="micToggleBtn" class="realtime-btn btn-mic-toggle" onclick="toggleRealtimeMic()" title="Mute/Unmute Mic">
-🎙️
+<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-mic'></use></svg>
 </button>
 
 </div>
@@ -1798,7 +1845,7 @@ Listening... Speak now or type below
 
 <div class="modal-header">
 
-<h2>🗣️ Choose AI Voice</h2>
+<h2><svg class='li-icon' aria-hidden='true'><use href='#icon-theatre'></use></svg> Choose AI Voice</h2>
 
 <span class="close-btn" onclick="document.getElementById('voiceModal').style.display='none'">
 &times;
@@ -1824,7 +1871,7 @@ Listening... Speak now or type below
 
 <div class="modal-header">
 
-<h2>🔐 Sign in to LuminaAI</h2>
+<h2><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-lock'></use></svg> Sign in to LuminaAI</h2>
 
 <span class="close-btn" onclick="document.getElementById('loginModal').style.display='none'">
 &times;
@@ -1867,7 +1914,7 @@ data-logo_alignment="left">
 
 <div class="modal-header">
 
-<h2>✨ Know More About You</h2>
+<h2><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-sparkle'></use></svg> Know More About You</h2>
 
 <span class="close-btn" onclick="document.getElementById('onboardingModal').style.display='none'">
 &times;
@@ -1888,7 +1935,7 @@ Tell us your name so Lumina can address you personally!
 <div class="setting-group" style="margin-top:10px;">
 
 <label for="onboardingNameInput">
-👤 Your Name
+<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-user'></use></svg> Your Name
 </label>
 
 <input type="text" id="onboardingNameInput" placeholder="Enter your name here...">
@@ -1911,7 +1958,7 @@ Save Profile
 
 <div class="modal-header">
 
-<h2>👤 Account Profile</h2>
+<h2><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-user'></use></svg> Account Profile</h2>
 
 <span class="close-btn" onclick="document.getElementById('accountModal').style.display='none'">
 &times;
@@ -1939,11 +1986,11 @@ Free Plan
 </p>
 
 <button onclick="openOnboardingModal()" style="width:100%;padding:10px;margin-bottom:8px;background:#444654;">
-Edit Name / Details ✏️
+Edit Name / Details <svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-pencil'></use></svg>
 </button>
 
 <button onclick="openPlansModal()" style="width:100%;padding:10px;margin-bottom:8px;background:var(--accent-color,#19c37d);">
-Upgrade Membership 💎
+Upgrade Membership <svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-diamond'></use></svg>
 </button>
 
 <button onclick="logout()" style="background:#e74c3c;width:100%;padding:10px;font-size:14px;border-radius:8px;">
@@ -1962,7 +2009,7 @@ Sign Out
 
 <div class="modal-header">
 
-<h2>💎 Choose Your Subscription Plan</h2>
+<h2><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-diamond'></use></svg> Choose Your Subscription Plan</h2>
 
 <span class="close-btn" onclick="closePlansModal()">
 &times;
@@ -2041,7 +2088,7 @@ Subscribe
 <div class="plan-card-info">
 
 <h4>
-Lumina AI Ultra ⚡
+Lumina AI Ultra <svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-bolt'></use></svg>
 <span class="badge ultra">
 Ultra VIP
 </span>
@@ -2079,7 +2126,7 @@ Subscribe
 
 <div class="modal-header">
 
-<h2>⚙️ Settings</h2>
+<h2><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-gear'></use></svg> Settings</h2>
 
 <span class="close-btn" onclick="closeSettings()">
 &times;
@@ -2092,7 +2139,7 @@ Subscribe
 <div class="setting-group">
 
 <label for="aiNicknameInput">
-🤖 AI Nickname
+<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-bot'></use></svg> AI Nickname
 </label>
 
 <input type="text" id="aiNicknameInput" placeholder="Enter AI Nickname">
@@ -2102,7 +2149,7 @@ Subscribe
 <div class="setting-group">
 
 <label for="aiPersonaSelect">
-🎭 AI Persona / Tone
+<svg class='li-icon' aria-hidden='true'><use href='#icon-theatre'></use></svg> AI Persona / Tone
 </label>
 
 <select id="aiPersonaSelect" onchange="savePersonaSetting()">
@@ -2112,7 +2159,7 @@ Helpful & Balanced
 </option>
 
 <option value="coder">
-Expert Programmer 💻
+Expert Programmer <svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-code'></use></svg>
 </option>
 
 <option value="roast">
@@ -2120,7 +2167,7 @@ Fast Replying
 </option>
 
 <option value="poet">
-Poetic & Creative 📜
+Poetic & Creative <svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-scroll'></use></svg>
 </option>
 
 <option value="Default">
@@ -2134,7 +2181,7 @@ Default
 <div class="setting-group">
 
 <label for="userFontSelect">
-🔤 Font Style
+<svg class='li-icon' aria-hidden='true'><use href='#icon-text'></use></svg> Font Style
 </label>
 
 <select id="userFontSelect" onchange="applyUserFont(this.value)">
@@ -2158,7 +2205,7 @@ Clean & Readable (Arial / Trebuchet)
 <div class="setting-group">
 
 <label>
-🔊 Voice Speech Rate
+<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-speaker'></use></svg> Voice Speech Rate
 (<span id="rateVal">1.0</span>x)
 </label>
 
@@ -2176,7 +2223,7 @@ oninput="document.getElementById('rateVal').innerText=this.value">
 <div class="setting-group">
 
 <label>
-🎵 Voice Pitch
+<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-music'></use></svg> Voice Pitch
 (<span id="pitchVal">1.0</span>)
 </label>
 
@@ -2196,7 +2243,7 @@ oninput="document.getElementById('pitchVal').innerText=this.value">
 <div class="plus-info">
 
 <h3>
-💎 Active Plan
+<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-diamond'></use></svg> Active Plan
 </h3>
 
 <span id="plusBadge" class="badge free">
@@ -2218,7 +2265,7 @@ Manage / Upgrade Plans
 <div class="setting-group">
 
 <label>
-🎨 Accent Theme
+<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-palette'></use></svg> Accent Theme
 </label>
 
 <div class="accent-options">
@@ -2259,7 +2306,7 @@ title="Amber Gold">
 <div class="setting-group">
 
 <label>
-🖼️ Premium Background Colors 👑
+<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-image'></use></svg> Premium Background Colors <svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-crown'></use></svg>
 </label>
 
 <div class="bg-options">
@@ -2273,25 +2320,25 @@ Default
 <button class="bg-card"
 style="background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);"
 onclick="setBgPreset('midnight')">
-Midnight 👑
+Midnight <svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-crown'></use></svg>
 </button>
 
 <button class="bg-card"
 style="background:linear-gradient(135deg,#0d0d0d,#1a1c2e,#130f26);"
 onclick="setBgPreset('deepspace')">
-Deep Space 👑
+Deep Space <svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-crown'></use></svg>
 </button>
 
 <button class="bg-card"
 style="background:linear-gradient(135deg,#2d0b28,#180b2d,#0b1a2d);"
 onclick="setBgPreset('sunset')">
-Sunset 👑
+Sunset <svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-crown'></use></svg>
 </button>
 
 <button class="bg-card"
 style="background:linear-gradient(135deg,#062b1e,#0a1f18,#11261d);"
 onclick="setBgPreset('emerald')">
-Emerald Dark 👑
+Emerald Dark <svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-crown'></use></svg>
 </button>
 
 </div>
@@ -2300,7 +2347,7 @@ Emerald Dark 👑
 <div class="setting-group">
 
 <label for="wallpaperInput">
-🖼️ Custom Wallpaper Upload
+<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-image'></use></svg> Custom Wallpaper Upload
 </label>
 
 <input
@@ -2329,6 +2376,10 @@ Save & Close
 </div>
 
 <script>
+function iconSvg(name, cls="") {
+  return `<svg class='li-icon ${cls}' aria-hidden='true' focusable='false'><use href='#icon-${name}'></use></svg>`;
+}
+
 
 let typingSoundCooldown = false;
 let currentMood = "neutral";
@@ -2642,8 +2693,8 @@ document.getElementById("scrollToggleBtn");
 
 if(btn){
 
-btn.innerText =
-"📜 Scroll: " +
+btn.innerHTML =
+iconSvg("scroll") + " Scroll: " +
 (isAutoScrollEnabled ? "ON" : "OFF");
 
 }
@@ -2674,8 +2725,8 @@ data.appName;
    Keep public SEO branding in visible welcome area.
 */
 
-document.getElementById("welcomeSub").innerText =
-"Ask Lumina anything with Lumina AI — coding, learning, creativity, questions and more. ✨";
+document.getElementById("welcomeSub").innerHTML =
+"Ask Lumina anything with Lumina AI — coding, learning, creativity, questions and more. <svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-sparkle'></use></svg>";
 
 /*
    IMPORTANT:
@@ -2800,8 +2851,8 @@ userName;
 document.getElementById("modalUserEmail").innerText =
 userEmail;
 
-document.getElementById("modalUserPlan").innerText =
-activePlan + " ✨";
+document.getElementById("modalUserPlan").innerHTML =
+activePlan + " " + iconSvg("sparkle");
 
 let modalAvatar =
 document.getElementById("modalUserAvatar");
@@ -3121,7 +3172,7 @@ localStorage.getItem("lumina_plus") === "true"
 
 planDisplay.innerText =
 activePlan +
-" ✨";
+" <svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-sparkle'></use></svg>";
 
 updateWelcomeScreenGreeting();
 
@@ -3295,8 +3346,8 @@ nick;
 
 document.getElementById(
 "welcomeSub"
-).innerText =
-"Ask Lumina anything with Lumina AI — coding, learning, creativity, questions and more. ✨";
+).innerHTML =
+"Ask Lumina anything with Lumina AI — coding, learning, creativity, questions and more. <svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-sparkle'></use></svg>";
 
 /*
    DO NOT change document.title here.
@@ -3383,8 +3434,8 @@ planName.includes("Ultra")
 :
 "badge plus";
 
-btn.innerText =
-"✅ " +
+btn.innerHTML =
+iconSvg("check") + " " +
 planName +
 " Active";
 
@@ -3471,9 +3522,9 @@ localStorage.getItem(
 closePlansModal();
 
 alert(
-"🎉 VIP Account Verified! You have free complimentary access to " +
+"<svg class='li-icon' aria-hidden='true'><use href='#icon-party'></use></svg> VIP Account Verified! You have free complimentary access to " +
 planName +
-" ✨"
+" <svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-sparkle'></use></svg>"
 );
 
 return;
@@ -3540,9 +3591,9 @@ localStorage.getItem(
 closePlansModal();
 
 alert(
-"✅ Payment Successful! You are now subscribed to " +
+"<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-check'></use></svg> Payment Successful! You are now subscribed to " +
 planName +
-" ✨"
+" <svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-sparkle'></use></svg>"
 );
 
 },
@@ -3596,7 +3647,7 @@ presetKey !== "default" &&
 ){
 
 alert(
-"👑 Premium Membership required! Upgrade to unlock custom background colors."
+"Premium Membership required! Upgrade to unlock custom background colors."
 );
 
 openPlansModal();
@@ -3786,8 +3837,8 @@ nick;
 
 document.getElementById(
 "welcomeSub"
-).innerText =
-"Ask Lumina anything with Lumina AI — coding, learning, creativity, questions and more. ✨";
+).innerHTML =
+"Ask Lumina anything with Lumina AI — coding, learning, creativity, questions and more. <svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-sparkle'></use></svg>";
 
 /*
    Keep SEO title fixed.
@@ -4002,8 +4053,8 @@ document.getElementById(
 
 document.getElementById(
 "micToggleBtn"
-).innerText =
-"🎙️";
+).innerHTML =
+"<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-mic'></use></svg>";
 
 startRealtimeListening();
 
@@ -4059,8 +4110,8 @@ if(isMicMuted){
 btn.className =
 "realtime-btn btn-mic-toggle muted";
 
-btn.innerText =
-"🔇";
+btn.innerHTML =
+"<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-mute'></use></svg>";
 
 orb.className =
 "realtime-orb";
@@ -4084,8 +4135,8 @@ else{
 btn.className =
 "realtime-btn btn-mic-toggle";
 
-btn.innerText =
-"🎙️";
+btn.innerHTML =
+"<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-mic'></use></svg>";
 
 orb.className =
 "realtime-orb listening";
@@ -4630,15 +4681,15 @@ document.getElementById(
 "status"
 );
 
-s.innerText =
+s.innerHTML =
 navigator.onLine
 
 ?
-"🟢 Online | Mood: " +
+iconSvg("online") + " Online | Mood: " +
 currentMood
 
 :
-"🔴 Offline";
+iconSvg("offline") + " Offline";
 
 }
 
@@ -4833,7 +4884,7 @@ ${titleText}
 onclick="deleteChatEntry(event,${i})"
 style="color:#ff5555;margin-left:6px;cursor:pointer;"
 title="Delete Chat">
-✕
+<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-close'></use></svg>
 </span>
 
 `;
@@ -5264,11 +5315,11 @@ messageDiv.className = "message bot";
 
 messageDiv.innerHTML = `
 <div class="message-actions">
-<button class="msg-action-btn" onclick="togglePinMessage(this)" title="Bookmark/Pin Message">📌 Pin</button>
-<button class="msg-action-btn" onclick="copyMessageText(this)" title="Copy text">📋 Copy</button>
+<button class="msg-action-btn" onclick="togglePinMessage(this)" title="Bookmark/Pin Message"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-pin'></use></svg> Pin</button>
+<button class="msg-action-btn" onclick="copyMessageText(this)" title="Copy text"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-copy'></use></svg> Copy</button>
 </div>
 <div class="msg-text-content">
-<div style="font-size:15px;font-weight:600;margin-bottom:10px;">🖼️ Generating image...</div>
+<div style="font-size:15px;font-weight:600;margin-bottom:10px;"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-image'></use></svg> Generating image...</div>
 <div style="opacity:.7;font-size:13px;margin-bottom:12px;">${escapeHtml(promptText)}</div>
 <div class="lumina-image-loader"><div class="lumina-image-spinner"></div><span>Lumina is creating your image...</span></div>
 </div>`;
@@ -5298,7 +5349,7 @@ imageElement.style.boxShadow = "0 8px 30px rgba(0,0,0,.35)";
 
 const saveButton = document.createElement("button");
 saveButton.className = "msg-action-btn";
-saveButton.innerHTML = "💾 Save Image";
+saveButton.innerHTML = iconSvg("save") + " Save Image";
 saveButton.style.marginTop = "10px";
 saveButton.onclick = function(){
 try{
@@ -5315,7 +5366,7 @@ link.click();
 const content = messageDiv.querySelector(".msg-text-content");
 if(content){
 content.innerHTML = `
-<div style="font-size:15px;font-weight:600;margin-bottom:4px;">🖼️ Generated Image</div>
+<div style="font-size:15px;font-weight:600;margin-bottom:4px;"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-image'></use></svg> Generated Image</div>
 <div style="opacity:.7;font-size:13px;margin-bottom:8px;">${escapeHtml(promptText)}</div>`;
 content.appendChild(imageElement);
 content.appendChild(saveButton);
@@ -5329,7 +5380,7 @@ smoothAutoScroll();
 console.error("Puter image generation error:",error);
 const content=messageDiv.querySelector(".msg-text-content");
 if(content){
-content.innerHTML=`<div style="font-weight:600;">⚠️ Image generation failed</div><div style="opacity:.75;font-size:13px;margin-top:6px;">${escapeHtml(error.message || "Please try again.")}</div>`;
+content.innerHTML=`<div style="font-weight:600;"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-warning'></use></svg> Image generation failed</div><div style="opacity:.75;font-size:13px;margin-top:6px;">${escapeHtml(error.message || "Please try again.")}</div>`;
 }
 }
 
@@ -5400,21 +5451,21 @@ actionsDiv.innerHTML = `
 class="msg-action-btn"
 onclick="togglePinMessage(this)"
 title="Bookmark/Pin Message">
-📌 Pin
+<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-pin'></use></svg> Pin
 </button>
 
 <button
 class="msg-action-btn"
 onclick="copyMessageText(this)"
 title="Copy text">
-📋 Copy
+<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-copy'></use></svg> Copy
 </button>
 
 <button
 class="msg-action-btn"
 onclick="speakMessageText(this)"
 title="Read aloud">
-🔊 Read
+<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-speaker'></use></svg> Read
 </button>
 
 `;
@@ -5520,21 +5571,21 @@ actionsDiv.innerHTML = `
 class="msg-action-btn"
 onclick="togglePinMessage(this)"
 title="Bookmark/Pin Message">
-📌 Pin
+<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-pin'></use></svg> Pin
 </button>
 
 <button
 class="msg-action-btn"
 onclick="copyMessageText(this)"
 title="Copy text">
-📋 Copy
+<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-copy'></use></svg> Copy
 </button>
 
 <button
 class="msg-action-btn"
 onclick="speakMessageText(this)"
 title="Read aloud">
-🔊 Read
+<svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-speaker'></use></svg> Read
 </button>
 
 `;
@@ -5593,14 +5644,14 @@ messageBox.classList.contains(
 ){
 
 btn.innerText =
-"📌 Pinned";
+iconSvg("pin") + " Pinned";
 
 }
 
 else{
 
 btn.innerText =
-"📌 Pin";
+iconSvg("pin") + " Pin";
 
 }
 
@@ -5684,63 +5735,127 @@ textToSpeak
    VOICE
 ============================================================ */
 
-function speak(text){
+async function speak(text){
 
 try{
 
-window.speechSynthesis.cancel();
-
-let cleanText =
-text.replace(
-/<[^>]*>?/gm,
-""
-);
-
-let speech =
-new SpeechSynthesisUtterance(
-cleanText
-);
-
-speech.rate =
-parseFloat(
-localStorage.getItem(
-"lumina_v_rate"
-)
-||
-"1"
-);
-
-speech.pitch =
-parseFloat(
-localStorage.getItem(
-"lumina_v_pitch"
-)
-||
-"1"
-);
-
-let voices =
-window.speechSynthesis.getVoices();
-
-if(
-voices.length > 0
-){
-
-speech.voice =
-voices[
-selectedVoiceIndex %
-voices.length
-];
-
+if(!text || !String(text).trim()){
+return;
 }
 
-window.speechSynthesis.speak(
-speech
+/* Stop any previous Fish Audio playback */
+if(window.luminaFishAudio){
+try{
+window.luminaFishAudio.pause();
+window.luminaFishAudio.currentTime = 0;
+}catch(e){}
+window.luminaFishAudio = null;
+}
+
+/* Clean HTML and code blocks before TTS */
+let cleanText = String(text)
+.replace(/```[\s\S]*?```/g, "")
+.replace(/<[^>]*>/gm, "")
+.trim();
+
+if(!cleanText){
+return;
+}
+
+/* Keep request within backend TTS limit */
+if(cleanText.length > 5000){
+cleanText = cleanText.substring(0,5000);
+}
+
+console.log("[LUMINA TTS] Requesting Fish Audio...");
+
+const response = await fetch(
+`${API_URL}/tts`,
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+text:cleanText
+})
+}
+);
+
+if(!response.ok){
+
+let errorText = "";
+
+try{
+errorText = await response.text();
+}catch(e){}
+
+console.error(
+"[LUMINA TTS ERROR]",
+response.status,
+errorText
+);
+
+return;
+}
+
+const audioBlob = await response.blob();
+
+if(!audioBlob || audioBlob.size === 0){
+console.error("[LUMINA TTS] Empty audio received.");
+return;
+}
+
+console.log(
+"[LUMINA TTS] Fish Audio received:",
+audioBlob.size,
+"bytes"
+);
+
+const audioUrl = URL.createObjectURL(audioBlob);
+const audio = new Audio(audioUrl);
+
+audio.volume = 1.0;
+window.luminaFishAudio = audio;
+
+audio.onended = function(){
+
+URL.revokeObjectURL(audioUrl);
+
+if(window.luminaFishAudio === audio){
+window.luminaFishAudio = null;
+}
+
+};
+
+audio.onerror = function(error){
+
+console.error(
+"[LUMINA TTS] Audio playback error:",
+error
+);
+
+URL.revokeObjectURL(audioUrl);
+
+if(window.luminaFishAudio === audio){
+window.luminaFishAudio = null;
+}
+
+};
+
+await audio.play();
+
+console.log("[LUMINA TTS] Fish Audio playing.");
+
+}
+catch(e){
+
+console.error(
+"[LUMINA TTS] Failed:",
+e
 );
 
 }
-
-catch(e){}
 
 }
 
