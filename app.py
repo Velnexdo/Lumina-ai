@@ -56,7 +56,7 @@ FISH_MODEL_ID = os.environ.get(
 # MODELS
 # ==================================================
 
-CHAT_MODEL = "qwen/qwen3.8-27b:free"
+CHAT_MODEL = "deepgram/flux-tts:free"
 IMAGE_MODEL = "recraft/recraft-v4-pro"
 
 # ==================================================
