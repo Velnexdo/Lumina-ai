@@ -65,7 +65,7 @@ FISH_MODEL_ID = os.environ.get(
 # This must be a chat model, NOT a TTS model.
 CHAT_MODEL = os.environ.get(
     "OPENROUTER_CHAT_MODEL",
-    "openai/gpt-oss-20b"
+    "nvidia/nemotron-3-embed-1b:free"
 )
 
 IMAGE_MODEL = "recraft/recraft-v4-pro"
