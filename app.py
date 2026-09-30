@@ -9,6 +9,7 @@ import uuid
 import html
 from datetime import datetime, timezone
 
+
 # ==================================================
 # APP
 # ==================================================
@@ -19,12 +20,14 @@ app = Flask(
     static_folder="static"
 )
 
+
 # ==================================================
 # CONFIG
 # ==================================================
 
 APP_NAME = "LuminaAI Ultra"
 DOMAIN = "https://asklumina.in"
+
 
 # ==================================================
 # API KEYS
@@ -42,6 +45,7 @@ IMAGE_API_KEY = os.environ.get(
 if not IMAGE_API_KEY:
     IMAGE_API_KEY = CHAT_API_KEY
 
+
 # Fish Audio
 FISH_AUDIO_API_KEY = os.environ.get(
     "FISH_AUDIO_API_KEY"
@@ -52,12 +56,20 @@ FISH_MODEL_ID = os.environ.get(
     "933563129e564b19a115bedd57b7406a"
 )
 
+
 # ==================================================
 # MODELS
 # ==================================================
 
-CHAT_MODEL = "deepgram/flux-tts:free"
+# FIXED:
+# This must be a chat model, NOT a TTS model.
+CHAT_MODEL = os.environ.get(
+    "OPENROUTER_CHAT_MODEL",
+    "openai/gpt-oss-20b"
+)
+
 IMAGE_MODEL = "recraft/recraft-v4-pro"
+
 
 # ==================================================
 # LIMITS
@@ -67,6 +79,7 @@ MAX_MESSAGE_LENGTH = 12000
 MAX_IMAGE_PROMPT_LENGTH = 2000
 MAX_TTS_LENGTH = 5000
 MAX_SHARE_TEXT_LENGTH = 30000
+
 
 # ==================================================
 # CORS
@@ -84,11 +97,13 @@ CORS(
     origins=ALLOWED_ORIGINS
 )
 
+
 # ==================================================
 # REQUEST SESSION
 # ==================================================
 
 session = requests.Session()
+
 
 # ==================================================
 # TRAINING
@@ -263,8 +278,8 @@ BEHAVIOR
 - Format code using Markdown.
 - Write clean working code.
 - Help with Python, HTML, CSS, JavaScript,
-  Roblox Lua, Flask, APIs, SQL, C++, React,
-  and other programming technologies.
+  Roblox Lua, Flask, APIs, SQL, C++,
+  React, and other programming technologies.
 - Debug code carefully.
 - Explain errors clearly.
 - Never pretend to know something you don't know.
@@ -311,9 +326,14 @@ def ask_ai(message):
 
     if not CHAT_API_KEY:
 
+        print(
+            "[CHAT ERROR] OPENROUTER_CHAT_API_KEY is missing."
+        )
+
         return (
             "⚠️ Lumina's AI service is "
-            "currently unavailable."
+            "not configured yet. Please check "
+            "the OPENROUTER_CHAT_API_KEY environment variable."
         )
 
     try:
@@ -383,15 +403,37 @@ def ask_ai(message):
 
         print(
             "[CHAT]",
-            response.status_code
+            response.status_code,
+            "MODEL:",
+            CHAT_MODEL
         )
 
         if response.status_code != 200:
 
             print(
                 "[CHAT ERROR]",
-                response.text[:1000]
+                response.text[:2000]
             )
+
+            # Try to expose a useful server-side reason
+            try:
+
+                error_data = response.json()
+
+                error_message = (
+                    error_data
+                    .get("error", {})
+                    .get("message")
+                )
+
+                if error_message:
+                    print(
+                        "[OPENROUTER ERROR]",
+                        error_message
+                    )
+
+            except Exception:
+                pass
 
             return (
                 "⚠️ Lumina couldn't get a "
@@ -404,6 +446,10 @@ def ask_ai(message):
             data = response.json()
 
         except Exception:
+
+            print(
+                "[CHAT ERROR] OpenRouter returned invalid JSON."
+            )
 
             return (
                 "⚠️ Lumina received "
@@ -436,12 +482,21 @@ def ask_ai(message):
 
                 return content.strip()
 
+        print(
+            "[CHAT ERROR] No usable choices in response:",
+            data
+        )
+
         return (
             "⚠️ Lumina couldn't understand "
             "the AI response."
         )
 
     except requests.Timeout:
+
+        print(
+            "[CHAT ERROR] Request timed out."
+        )
 
         return (
             "⚠️ Lumina took too long "
@@ -580,15 +635,20 @@ def generate_speech(text):
 
     if not FISH_AUDIO_API_KEY:
 
-        return None, "Fish Audio API key missing."
+        return (
+            None,
+            "Fish Audio API key missing."
+        )
 
     if not FISH_MODEL_ID:
 
-        return None, "Fish Audio model ID missing."
+        return (
+            None,
+            "Fish Audio model ID missing."
+        )
 
     try:
 
-        # Fish Audio TTS API
         response = session.post(
 
             "https://api.fish.audio/v1/tts",
@@ -716,6 +776,7 @@ def load_shares():
                 data,
                 dict
             ):
+
                 return data
 
     except FileNotFoundError:
@@ -1198,6 +1259,7 @@ def create_share():
             title,
             str
         ):
+
             title = "Lumina AI Response"
 
         if not isinstance(
@@ -1274,8 +1336,10 @@ def create_share():
         )
 
         return jsonify({
+
             "error":
                 "Unable to create share."
+
         }), 500
 
 
@@ -1601,6 +1665,9 @@ def health():
 
         "domain":
             DOMAIN,
+
+        "chat_model":
+            CHAT_MODEL,
 
         "training_contexts":
             len(TRAINING_INDEX),
