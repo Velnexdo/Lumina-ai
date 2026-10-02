@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+    <!-- Adcash Banner Library -->
+    <script id="aclib" type="text/javascript" src="//acscdn.com/script/aclib.js"></script>
+
     <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9265456540761140"
          crossorigin="anonymous"></script>
@@ -1597,6 +1600,22 @@ font-size:12px;
 .li-icon{width:1em;height:1em;display:inline-block;vertical-align:-0.14em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;}
 button .li-icon{pointer-events:none;}
 .li-icon.icon-fill{fill:currentColor;stroke:currentColor;}
+
+/* Controlled Adcash banner slot */
+.adcash-banner-slot{
+    width:100%;
+    max-width:728px;
+    min-height:0;
+    margin:6px auto 4px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    overflow:hidden;
+    flex-shrink:0;
+    position:relative;
+    z-index:4;
+}
+
 </style>
 </head>
 
@@ -1743,6 +1762,15 @@ Ask Lumina anything with Lumina AI — coding, learning, creativity, questions a
 </div>
 
 <div id="suggestions"></div>
+
+
+<div id="adcashBannerSlot" class="adcash-banner-slot" aria-label="Advertisement">
+    <script type="text/javascript">
+        aclib.runBanner({
+            zoneId: '12258378',
+        });
+    </script>
+</div>
 
 <div class="input-area">
 
