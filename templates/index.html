@@ -5,15 +5,8 @@
     <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9265456540761140"
          crossorigin="anonymous"></script>
-
-<!-- Adcash Autotag Library -->
-<script id="aclib" type="text/javascript" src="//acscdn.com/script/aclib.js"></script>
-<!-- Adcash Autotag -->
-<script type="text/javascript">
-    aclib.runAutoTag({
-        zoneId: 'jjf9ysewek',
-    });
-</script>
+    <!-- Adcash Banner Library -->
+    <script id="aclib" type="text/javascript" src="//acscdn.com/script/aclib.js"></script>
 
 
 <!-- Plausible Analytics -->
@@ -1610,6 +1603,15 @@ button .li-icon{pointer-events:none;}
 </head>
 
 <body class="dark" onload="initApp()">
+    <!-- Adcash Banner Zone -->
+    <div id="adcash-banner-zone" style="width:100%; display:flex; justify-content:center; align-items:center; margin:12px auto; position:relative; z-index:4;">
+        <script type="text/javascript">
+            aclib.runBanner({
+                zoneId: '12258378',
+            });
+        </script>
+    </div>
+
 <!-- LUMINA CUSTOM ICON SYSTEM: handcrafted inline SVG icons; no native emoji glyphs. -->
 <svg id="luminaIconSprite" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
   <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M20 15.2A8.6 8.6 0 0 1 8.8 4 8.6 8.6 0 1 0 20 15.2Z"/></symbol>
