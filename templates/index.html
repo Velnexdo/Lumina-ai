@@ -1637,6 +1637,101 @@ font-size:12px;
 .li-icon{width:1em;height:1em;display:inline-block;vertical-align:-0.14em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;}
 button .li-icon{pointer-events:none;}
 .li-icon.icon-fill{fill:currentColor;stroke:currentColor;}
+
+/* New Image prompt composer */
+.lumina-image-new-badge{
+display:inline-flex;
+align-items:center;
+justify-content:center;
+padding:4px 7px;
+border-radius:999px;
+font-size:9px;
+font-weight:900;
+letter-spacing:.5px;
+background:var(--accent-color,#19c37d);
+color:#fff;
+box-shadow:0 0 16px rgba(25,195,125,.35);
+animation:luminaNewBadgePulse 2s ease-in-out infinite;
+}
+@keyframes luminaNewBadgePulse{
+0%,100%{transform:scale(1);opacity:1}
+50%{transform:scale(1.05);opacity:.82}
+}
+
+.lumina-image-prompt-shell{
+border:1px solid rgba(255,255,255,.13);
+border-radius:16px;
+background:rgba(255,255,255,.035);
+overflow:hidden;
+transition:border-color .2s ease,box-shadow .2s ease;
+}
+.lumina-image-prompt-shell:focus-within{
+border-color:var(--accent-color,#19c37d);
+box-shadow:0 0 0 3px rgba(25,195,125,.10);
+}
+
+#luminaImagePrompt{
+display:block;
+width:100%;
+min-height:145px;
+resize:vertical;
+border:0;
+outline:0;
+padding:16px;
+background:transparent;
+color:inherit;
+font:inherit;
+font-size:15px;
+line-height:1.55;
+box-sizing:border-box;
+}
+#luminaImagePrompt::placeholder{
+opacity:.48;
+}
+
+.lumina-image-prompt-footer{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:10px;
+padding:10px 12px;
+border-top:1px solid rgba(255,255,255,.08);
+}
+#luminaImagePromptCount{
+font-size:11px;
+opacity:.5;
+}
+#luminaGenerateImageButton{
+border:0;
+border-radius:11px;
+padding:9px 15px;
+background:var(--accent-color,#19c37d);
+color:#fff;
+font-weight:800;
+cursor:pointer;
+display:inline-flex;
+align-items:center;
+gap:6px;
+transition:transform .15s ease,filter .15s ease;
+}
+#luminaGenerateImageButton:hover{
+filter:brightness(1.08);
+transform:translateY(-1px);
+}
+.lumina-image-enhance-note{
+display:flex;
+align-items:center;
+gap:8px;
+margin-top:11px;
+font-size:11px;
+opacity:.62;
+}
+.lumina-image-enhance-note span:first-child{
+color:var(--accent-color,#19c37d);
+font-size:14px;
+}
+
+
 </style>
 </head>
 
@@ -1790,7 +1885,7 @@ Ask Lumina anything with Lumina AI — coding, learning, creativity, questions a
 
 <button onclick="openRealtimeChat()" title="Real-time Voice Chat" style="background:linear-gradient(135deg,#6b11ff,#00d2ff);display:flex;align-items:center;justify-content:center;font-size:16px;"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-mic'></use></svg></button>
 
-<button class="lumina-new-image-btn" onclick="openImageAttachmentPicker()" title="New: Generate or Edit Image"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-image'></use></svg></button>
+<button class="lumina-new-image-btn" onclick="openImageAttachmentPicker()" title="New: Create Image"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-image'></use></svg></button>
 
 <button onclick="openTemplateModal()" title="Prompt Templates"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-doc'></use></svg></button>
 
@@ -5374,156 +5469,122 @@ let luminaImageAttachments = [];
 
 function openImageAttachmentPicker(){
 
-/*
-The SAME Image option opens one small composer.
-The image attachment is optional: the user can type a prompt only,
-attach an image only, or use both together.
-*/
-
-let modal = document.getElementById("luminaImageComposer");
-
-if(modal){
-modal.remove();
+const existing = document.getElementById("luminaImagePromptComposer");
+if(existing){
+    existing.remove();
 }
 
-modal = document.createElement("div");
-modal.id = "luminaImageComposer";
-modal.style.cssText = `
-position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.65);
-display:flex;align-items:center;justify-content:center;padding:20px;
+const overlay = document.createElement("div");
+overlay.id = "luminaImagePromptComposer";
+overlay.style.cssText = `
+position:fixed;
+inset:0;
+z-index:99999;
+display:flex;
+align-items:center;
+justify-content:center;
+padding:20px;
+background:rgba(0,0,0,.58);
+backdrop-filter:blur(10px);
 `;
 
-modal.innerHTML = `
-<div style="width:min(560px,100%);background:var(--bg-secondary,#1b1b1b);color:var(--text-primary,#fff);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:20px;box-shadow:0 20px 70px rgba(0,0,0,.45);">
+const box = document.createElement("div");
+box.style.cssText = `
+width:min(620px,100%);
+border:1px solid rgba(255,255,255,.12);
+border-radius:22px;
+padding:22px;
+background:var(--background-secondary,#202123);
+box-shadow:0 24px 80px rgba(0,0,0,.45);
+`;
 
-<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;">
-<div style="font-size:18px;font-weight:700;">Create or Edit Image</div>
-<button type="button" id="luminaImageComposerClose" style="border:0;background:transparent;color:inherit;font-size:24px;cursor:pointer;line-height:1;">&times;</button>
+box.innerHTML = `
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;">
+    <div>
+        <div style="display:flex;align-items:center;gap:9px;font-size:18px;font-weight:800;">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:var(--accent-color,#19c37d);color:#fff;">
+                ✨
+            </span>
+            Create Image
+            <span class="lumina-image-new-badge">NEW</span>
+        </div>
+        <div style="font-size:12px;opacity:.62;margin-top:5px;">
+            Describe anything you want Lumina to create.
+        </div>
+    </div>
+    <button id="luminaImageComposerClose" type="button"
+        style="border:0;background:rgba(255,255,255,.07);color:inherit;border-radius:10px;width:34px;height:34px;font-size:18px;cursor:pointer;">
+        ×
+    </button>
 </div>
 
-<textarea id="luminaImagePrompt" placeholder="Type what you want Lumina to create or edit..." style="width:100%;min-height:120px;resize:vertical;box-sizing:border-box;border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:13px;background:rgba(255,255,255,.06);color:inherit;outline:none;font:inherit;"></textarea>
-
-<div id="luminaImagePreview" style="display:none;margin-top:12px;"></div>
-
-<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;flex-wrap:wrap;">
-<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-<button type="button" id="luminaAddImageButton" style="border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.07);color:inherit;border-radius:10px;padding:10px 13px;cursor:pointer;">🖼️ Add Image <span style="opacity:.65;font-size:12px;">(optional)</span></button>
-<span id="luminaImageCount" style="font-size:12px;opacity:.7;"></span>
+<div class="lumina-image-prompt-shell">
+    <textarea id="luminaImagePrompt"
+        placeholder="Describe the image you want..."
+        rows="5"
+        maxlength="4000"></textarea>
+    <div class="lumina-image-prompt-footer">
+        <span id="luminaImagePromptCount">0 / 4000</span>
+        <button id="luminaGenerateImageButton" type="button">
+            <span>✨</span> Create
+        </button>
+    </div>
 </div>
 
-<button type="button" id="luminaGenerateImageButton" style="border:0;background:#fff;color:#111;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;">Generate</button>
+<div class="lumina-image-enhance-note">
+    <span>✦</span>
+    <span>Lumina will enhance your prompt to create a more detailed image.</span>
 </div>
+`;
 
-<div style="font-size:12px;opacity:.6;margin-top:10px;line-height:1.45;">
-You can type a prompt without an image. Add up to 2 images when you want Lumina to edit or combine references.
-</div>
-
-<input id="luminaImageAttachmentInput" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
-</div>`;
-
-document.body.appendChild(modal);
+overlay.appendChild(box);
+document.body.appendChild(overlay);
 
 const promptInput = document.getElementById("luminaImagePrompt");
-const fileInput = document.getElementById("luminaImageAttachmentInput");
-const addButton = document.getElementById("luminaAddImageButton");
+const count = document.getElementById("luminaImagePromptCount");
 const generateButton = document.getElementById("luminaGenerateImageButton");
 const closeButton = document.getElementById("luminaImageComposerClose");
-const preview = document.getElementById("luminaImagePreview");
-const count = document.getElementById("luminaImageCount");
 
-luminaImageAttachments = [];
-
-function refreshImagePreview(){
-if(!luminaImageAttachments.length){
-preview.style.display="none";
-preview.innerHTML="";
-count.textContent="";
-return;
-}
-
-preview.style.display="flex";
-preview.style.gap="8px";
-preview.style.flexWrap="wrap";
-preview.innerHTML = luminaImageAttachments.map((item,index)=>`
-<div style="position:relative;width:92px;height:72px;">
-<img src="${item.dataUrl}" alt="Attached image ${index+1}" style="width:100%;height:100%;object-fit:cover;border-radius:9px;border:1px solid rgba(255,255,255,.14);">
-<button type="button" data-remove-image="${index}" style="position:absolute;right:4px;top:4px;border:0;border-radius:50%;width:22px;height:22px;background:rgba(0,0,0,.75);color:#fff;cursor:pointer;">×</button>
-</div>`).join("");
-
-count.textContent = `${luminaImageAttachments.length}/2 image${luminaImageAttachments.length===1?"":"s"}`;
-
-preview.querySelectorAll("[data-remove-image]").forEach(button=>{
-button.onclick=()=>{
-const index=Number(button.getAttribute("data-remove-image"));
-luminaImageAttachments.splice(index,1);
-refreshImagePreview();
-};
-});
-}
-
-addButton.onclick=()=>{
-if(luminaImageAttachments.length >= 2){
-alert("You can attach up to 2 images for one image request.");
-return;
-}
-fileInput.value="";
-fileInput.click();
+const updateCount = ()=>{
+    count.textContent = `${promptInput.value.length} / 4000`;
 };
 
-fileInput.onchange=async()=>{
-const files=Array.from(fileInput.files || []).filter(file=>file.type.startsWith("image/"));
+promptInput.addEventListener("input",updateCount);
 
-if(!files.length)return;
-
-const available=2-luminaImageAttachments.length;
-const selected=files.slice(0,available);
-
-for(const file of selected){
-await new Promise(resolve=>{
-const reader=new FileReader();
-reader.onload=e=>{
-luminaImageAttachments.push({name:file.name,dataUrl:e.target.result});
-resolve();
-};
-reader.onerror=resolve;
-reader.readAsDataURL(file);
-});
-}
-
-if(files.length>available){
-alert("Only 2 images can be attached to one image request.");
-}
-
-refreshImagePreview();
+const close = ()=>{
+    overlay.remove();
 };
 
-closeButton.onclick=()=>{
-luminaImageAttachments=[];
-modal.remove();
-};
+closeButton.onclick = close;
 
-modal.addEventListener("click",event=>{
-if(event.target===modal){
-closeButton.click();
-}
+overlay.addEventListener("click",event=>{
+    if(event.target === overlay){
+        close();
+    }
 });
 
-generateButton.onclick=()=>{
-const promptText=(promptInput.value || "").trim();
+generateButton.onclick = ()=>{
+    const promptText = promptInput.value.trim();
 
-if(!promptText){
-alert("Please type a prompt. Adding an image is optional.");
-promptInput.focus();
-return;
-}
+    if(!promptText){
+        promptInput.focus();
+        promptInput.style.boxShadow = "0 0 0 2px var(--accent-color,#19c37d)";
+        return;
+    }
 
-const attachments=[...luminaImageAttachments];
-luminaImageAttachments=[];
-modal.remove();
-generateImage(promptText,attachments);
+    close();
+    generateImage(promptText,[]);
 };
 
-setTimeout(()=>promptInput.focus(),0);
+promptInput.addEventListener("keydown",event=>{
+    if((event.ctrlKey || event.metaKey) && event.key === "Enter"){
+        generateButton.click();
+    }
+});
+
+setTimeout(()=>{
+    promptInput.focus();
+},50);
 
 }
 
@@ -5696,7 +5757,7 @@ generator can use to create the requested result.
 async function generateImage(providedPrompt=null, providedAttachments=null){
 
 const promptText = String(providedPrompt ?? "").trim();
-let attachments = Array.isArray(providedAttachments) ? [...providedAttachments] : [...luminaImageAttachments];
+let attachments = []; // Image creation is prompt-only in the new UI.
 
 if(!promptText){
 /* Image generation now starts from the composer, so an empty prompt is invalid. */
@@ -5709,9 +5770,6 @@ If the user attaches one place image and says "add me", Lumina may
 use a locally stored profile photo as the person reference when one
 is available as a browser data URL. The self-photo is therefore optional.
 */
-const wantsMe = /\b(add|put|place|insert|include)\s+me\b/i.test(promptText);
-const profilePhoto = localStorage.getItem("lumina_user_pic") || "";
-
 if(wantsMe && attachments.length === 1 && profilePhoto.startsWith("data:image/")){
 attachments = [
 {name:"profile-photo",dataUrl:profilePhoto},
