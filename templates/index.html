@@ -5617,6 +5617,82 @@ return canvas.toDataURL("image/jpeg",0.92);
 
 }
 
+
+async function luminaAnalyzeReferenceImage(dataUrl, userRequest){
+    if(!dataUrl || !puter || !puter.ai || typeof puter.ai.chat !== "function"){
+        return "";
+    }
+
+    const visionPrompt = `
+Analyze the attached reference image for an image-generation task.
+
+User's requested edit/instruction:
+${userRequest}
+
+Describe ONLY the visual information that is useful for recreating or transforming
+the reference: subjects, identity-relevant visible features, clothing, pose, objects,
+environment, composition, camera angle, perspective, lighting, colors, background,
+text/signs that should remain, and important spatial relationships.
+
+Do not invent details that are not visible.
+Do not ignore the user's requested change.
+Return a concise but detailed visual reference description that another image
+generator can use to create the requested result.
+`;
+
+    try{
+        let result;
+
+        // Puter vision-capable chat APIs commonly accept the image URL/data URL
+        // as the second argument. Try that first.
+        try{
+            result = await puter.ai.chat(visionPrompt, dataUrl);
+        }catch(e){
+            // Some Puter builds accept a message content array instead.
+            result = await puter.ai.chat([
+                {
+                    role:"user",
+                    content:[
+                        {type:"text", text:visionPrompt},
+                        {type:"image_url", image_url:{url:dataUrl}}
+                    ]
+                }
+            ]);
+        }
+
+        if(typeof result === "string"){
+            return result;
+        }
+
+        if(result?.message?.content){
+            if(typeof result.message.content === "string"){
+                return result.message.content;
+            }
+            if(Array.isArray(result.message.content)){
+                return result.message.content
+                    .map(x => typeof x === "string" ? x : (x?.text || ""))
+                    .filter(Boolean)
+                    .join("\n");
+            }
+        }
+
+        if(result?.content){
+            if(typeof result.content === "string") return result.content;
+            if(Array.isArray(result.content)){
+                return result.content
+                    .map(x => typeof x === "string" ? x : (x?.text || ""))
+                    .filter(Boolean)
+                    .join("\n");
+            }
+        }
+
+        return "";
+    }catch(error){
+        console.warn("Lumina reference-image analysis failed:", error);
+        return "";
+    }
+}
+
 async function generateImage(providedPrompt=null, providedAttachments=null){
 
 const promptText = String(providedPrompt ?? "").trim();
