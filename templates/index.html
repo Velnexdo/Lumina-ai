@@ -2,9 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-    <!-- Adcash Banner Library -->
-    <script id="aclib" type="text/javascript" src="//acscdn.com/script/aclib.js"></script>
-
     <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9265456540761140"
          crossorigin="anonymous"></script>
@@ -906,6 +903,46 @@ background:linear-gradient(45deg,#9b51e0,#00d2ff);
 color:white;
 }
 
+
+/* Accent-driven text selection/highlight */
+::selection{
+background:var(--accent-color,#19c37d);
+color:#fff;
+}
+::-moz-selection{
+background:var(--accent-color,#19c37d);
+color:#fff;
+}
+
+/* Highlight the new Image feature */
+.lumina-new-image-btn{
+position:relative;
+overflow:visible !important;
+border:1px solid var(--accent-color,#19c37d) !important;
+box-shadow:0 0 0 1px rgba(255,255,255,.04),0 0 16px rgba(25,195,125,.35);
+animation:luminaImagePulse 2s ease-in-out infinite;
+}
+.lumina-new-image-btn::after{
+content:"NEW";
+position:absolute;
+right:-7px;
+top:-10px;
+font-size:9px;
+font-weight:800;
+line-height:1;
+padding:4px 6px;
+border-radius:999px;
+background:var(--accent-color,#19c37d);
+color:#fff;
+box-shadow:0 3px 10px rgba(0,0,0,.25);
+letter-spacing:.3px;
+}
+@keyframes luminaImagePulse{
+0%,100%{box-shadow:0 0 0 1px rgba(255,255,255,.04),0 0 10px rgba(25,195,125,.24);}
+50%{box-shadow:0 0 0 2px rgba(25,195,125,.18),0 0 22px rgba(25,195,125,.48);}
+}
+
+
 .accent-options{
 display:flex;
 gap:10px;
@@ -1600,22 +1637,6 @@ font-size:12px;
 .li-icon{width:1em;height:1em;display:inline-block;vertical-align:-0.14em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;}
 button .li-icon{pointer-events:none;}
 .li-icon.icon-fill{fill:currentColor;stroke:currentColor;}
-
-/* Controlled Adcash banner slot */
-.adcash-banner-slot{
-    width:100%;
-    max-width:728px;
-    min-height:0;
-    margin:6px auto 4px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    overflow:hidden;
-    flex-shrink:0;
-    position:relative;
-    z-index:4;
-}
-
 </style>
 </head>
 
@@ -1763,22 +1784,13 @@ Ask Lumina anything with Lumina AI — coding, learning, creativity, questions a
 
 <div id="suggestions"></div>
 
-
-<div id="adcashBannerSlot" class="adcash-banner-slot" aria-label="Advertisement">
-    <script type="text/javascript">
-        aclib.runBanner({
-            zoneId: '12258378',
-        });
-    </script>
-</div>
-
 <div class="input-area">
 
 <button onclick="startListening()" title="Voice Input"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-mic'></use></svg></button>
 
 <button onclick="openRealtimeChat()" title="Real-time Voice Chat" style="background:linear-gradient(135deg,#6b11ff,#00d2ff);display:flex;align-items:center;justify-content:center;font-size:16px;"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-mic'></use></svg></button>
 
-<button onclick="generateImage()" title="Generate Image"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-image'></use></svg></button>
+<button class="lumina-new-image-btn" onclick="openImageAttachmentPicker()" title="New: Generate or Edit Image"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-image'></use></svg></button>
 
 <button onclick="openTemplateModal()" title="Prompt Templates"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-doc'></use></svg></button>
 
@@ -2341,6 +2353,22 @@ onclick="setAccent('#f2994a')"
 title="Amber Gold">
 </button>
 
+</div>
+
+<div id="customAccentArea" style="margin-top:12px;">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+<label for="customAccentColor" style="font-size:12px;margin:0;">Custom accent</label>
+<input id="customAccentColor" type="color" value="#19c37d"
+style="width:42px;height:32px;padding:2px;border-radius:8px;border:1px solid rgba(255,255,255,.16);background:transparent;cursor:pointer;"
+title="Choose a custom accent color">
+<button type="button" id="customAccentApplyBtn"
+style="border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:7px 10px;background:rgba(255,255,255,.07);color:inherit;cursor:pointer;">
+Apply
+</button>
+</div>
+<div id="customAccentHint" style="font-size:11px;opacity:.65;margin-top:6px;">
+Custom accent colors are available for Plus and Pro members.
+</div>
 </div>
 </div>
 
@@ -3408,6 +3436,10 @@ closeSettings();
 
 function setAccent(color){
 
+if(!/^#[0-9a-fA-F]{6}$/.test(color)){
+return;
+}
+
 document.documentElement.style.setProperty(
 "--accent-color",
 color
@@ -3417,6 +3449,11 @@ localStorage.setItem(
 "lumina_accent",
 color
 );
+
+const customInput = document.getElementById("customAccentColor");
+if(customInput){
+customInput.value = color;
+}
 
 }
 
@@ -5333,15 +5370,282 @@ return String(value)
 .replace(/'/g,"&#039;");
 }
 
-async function generateImage(){
+let luminaImageAttachments = [];
 
-const userPrompt = window.prompt("Enter image prompt:");
+function openImageAttachmentPicker(){
 
-if(!userPrompt || !userPrompt.trim()){
+/*
+The SAME Image option opens one small composer.
+The image attachment is optional: the user can type a prompt only,
+attach an image only, or use both together.
+*/
+
+let modal = document.getElementById("luminaImageComposer");
+
+if(modal){
+modal.remove();
+}
+
+modal = document.createElement("div");
+modal.id = "luminaImageComposer";
+modal.style.cssText = `
+position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.65);
+display:flex;align-items:center;justify-content:center;padding:20px;
+`;
+
+modal.innerHTML = `
+<div style="width:min(560px,100%);background:var(--bg-secondary,#1b1b1b);color:var(--text-primary,#fff);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:20px;box-shadow:0 20px 70px rgba(0,0,0,.45);">
+
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;">
+<div style="font-size:18px;font-weight:700;">Create or Edit Image</div>
+<button type="button" id="luminaImageComposerClose" style="border:0;background:transparent;color:inherit;font-size:24px;cursor:pointer;line-height:1;">&times;</button>
+</div>
+
+<textarea id="luminaImagePrompt" placeholder="Type what you want Lumina to create or edit..." style="width:100%;min-height:120px;resize:vertical;box-sizing:border-box;border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:13px;background:rgba(255,255,255,.06);color:inherit;outline:none;font:inherit;"></textarea>
+
+<div id="luminaImagePreview" style="display:none;margin-top:12px;"></div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;flex-wrap:wrap;">
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+<button type="button" id="luminaAddImageButton" style="border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.07);color:inherit;border-radius:10px;padding:10px 13px;cursor:pointer;">🖼️ Add Image <span style="opacity:.65;font-size:12px;">(optional)</span></button>
+<span id="luminaImageCount" style="font-size:12px;opacity:.7;"></span>
+</div>
+
+<button type="button" id="luminaGenerateImageButton" style="border:0;background:#fff;color:#111;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;">Generate</button>
+</div>
+
+<div style="font-size:12px;opacity:.6;margin-top:10px;line-height:1.45;">
+You can type a prompt without an image. Add up to 2 images when you want Lumina to edit or combine references.
+</div>
+
+<input id="luminaImageAttachmentInput" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
+</div>`;
+
+document.body.appendChild(modal);
+
+const promptInput = document.getElementById("luminaImagePrompt");
+const fileInput = document.getElementById("luminaImageAttachmentInput");
+const addButton = document.getElementById("luminaAddImageButton");
+const generateButton = document.getElementById("luminaGenerateImageButton");
+const closeButton = document.getElementById("luminaImageComposerClose");
+const preview = document.getElementById("luminaImagePreview");
+const count = document.getElementById("luminaImageCount");
+
+luminaImageAttachments = [];
+
+function refreshImagePreview(){
+if(!luminaImageAttachments.length){
+preview.style.display="none";
+preview.innerHTML="";
+count.textContent="";
 return;
 }
 
-const promptText = userPrompt.trim();
+preview.style.display="flex";
+preview.style.gap="8px";
+preview.style.flexWrap="wrap";
+preview.innerHTML = luminaImageAttachments.map((item,index)=>`
+<div style="position:relative;width:92px;height:72px;">
+<img src="${item.dataUrl}" alt="Attached image ${index+1}" style="width:100%;height:100%;object-fit:cover;border-radius:9px;border:1px solid rgba(255,255,255,.14);">
+<button type="button" data-remove-image="${index}" style="position:absolute;right:4px;top:4px;border:0;border-radius:50%;width:22px;height:22px;background:rgba(0,0,0,.75);color:#fff;cursor:pointer;">×</button>
+</div>`).join("");
+
+count.textContent = `${luminaImageAttachments.length}/2 image${luminaImageAttachments.length===1?"":"s"}`;
+
+preview.querySelectorAll("[data-remove-image]").forEach(button=>{
+button.onclick=()=>{
+const index=Number(button.getAttribute("data-remove-image"));
+luminaImageAttachments.splice(index,1);
+refreshImagePreview();
+};
+});
+}
+
+addButton.onclick=()=>{
+if(luminaImageAttachments.length >= 2){
+alert("You can attach up to 2 images for one image request.");
+return;
+}
+fileInput.value="";
+fileInput.click();
+};
+
+fileInput.onchange=async()=>{
+const files=Array.from(fileInput.files || []).filter(file=>file.type.startsWith("image/"));
+
+if(!files.length)return;
+
+const available=2-luminaImageAttachments.length;
+const selected=files.slice(0,available);
+
+for(const file of selected){
+await new Promise(resolve=>{
+const reader=new FileReader();
+reader.onload=e=>{
+luminaImageAttachments.push({name:file.name,dataUrl:e.target.result});
+resolve();
+};
+reader.onerror=resolve;
+reader.readAsDataURL(file);
+});
+}
+
+if(files.length>available){
+alert("Only 2 images can be attached to one image request.");
+}
+
+refreshImagePreview();
+};
+
+closeButton.onclick=()=>{
+luminaImageAttachments=[];
+modal.remove();
+};
+
+modal.addEventListener("click",event=>{
+if(event.target===modal){
+closeButton.click();
+}
+});
+
+generateButton.onclick=()=>{
+const promptText=(promptInput.value || "").trim();
+
+if(!promptText){
+alert("Please type a prompt. Adding an image is optional.");
+promptInput.focus();
+return;
+}
+
+const attachments=[...luminaImageAttachments];
+luminaImageAttachments=[];
+modal.remove();
+generateImage(promptText,attachments);
+};
+
+setTimeout(()=>promptInput.focus(),0);
+
+}
+
+function handleImageAttachments(input){
+/* Kept for compatibility with older code that may call this function. */
+const files=Array.from(input?.files || []).filter(file=>file.type.startsWith("image/"));
+if(!files.length)return;
+
+luminaImageAttachments=[];
+const selected=files.slice(0,2);
+let remaining=selected.length;
+
+selected.forEach(file=>{
+const reader=new FileReader();
+reader.onload=event=>{
+luminaImageAttachments.push({name:file.name,dataUrl:event.target.result});
+remaining--;
+if(remaining===0)generateImage();
+};
+reader.onerror=()=>{
+remaining--;
+if(remaining===0)generateImage();
+};
+reader.readAsDataURL(file);
+});
+
+}
+
+function loadLuminaImage(dataUrl){
+
+return new Promise((resolve,reject)=>{
+
+const img = new Image();
+
+img.onload = ()=>resolve(img);
+img.onerror = ()=>reject(new Error("Could not read the attached image."));
+img.src = dataUrl;
+
+});
+
+}
+
+async function makeLuminaReferenceBoard(images){
+
+if(images.length === 1){
+return images[0].dataUrl;
+}
+
+const first = await loadLuminaImage(images[0].dataUrl);
+const second = await loadLuminaImage(images[1].dataUrl);
+
+const width = 1536;
+const height = 1024;
+const canvas = document.createElement("canvas");
+canvas.width = width;
+canvas.height = height;
+
+const ctx = canvas.getContext("2d");
+
+if(!ctx){
+throw new Error("Your browser does not support image processing.");
+}
+
+ctx.fillStyle = "#111";
+ctx.fillRect(0,0,width,height);
+
+/* First image = person/source reference. */
+const leftW = 540;
+const rightW = width - leftW;
+
+function drawCover(img,x,y,w,h){
+const scale = Math.max(w/img.width,h/img.height);
+const dw = img.width*scale;
+const dh = img.height*scale;
+ctx.drawImage(img,x+(w-dw)/2,y+(h-dh)/2,dw,dh);
+}
+
+drawCover(first,0,0,leftW,height);
+drawCover(second,leftW,0,rightW,height);
+
+ctx.fillStyle = "rgba(0,0,0,.68)";
+ctx.fillRect(0,0,leftW,54);
+ctx.fillRect(leftW,0,rightW,54);
+
+ctx.fillStyle = "#fff";
+ctx.font = "700 24px Segoe UI, Arial, sans-serif";
+ctx.fillText("PERSON / SOURCE",22,36);
+ctx.fillText("PLACE / SCENE",leftW+22,36);
+
+return canvas.toDataURL("image/jpeg",0.92);
+
+}
+
+async function generateImage(providedPrompt=null, providedAttachments=null){
+
+const promptText = String(providedPrompt ?? "").trim();
+let attachments = Array.isArray(providedAttachments) ? [...providedAttachments] : [...luminaImageAttachments];
+
+if(!promptText){
+/* Image generation now starts from the composer, so an empty prompt is invalid. */
+luminaImageAttachments = [];
+return;
+}
+
+/*
+If the user attaches one place image and says "add me", Lumina may
+use a locally stored profile photo as the person reference when one
+is available as a browser data URL. The self-photo is therefore optional.
+*/
+const wantsMe = /\b(add|put|place|insert|include)\s+me\b/i.test(promptText);
+const profilePhoto = localStorage.getItem("lumina_user_pic") || "";
+
+if(wantsMe && attachments.length === 1 && profilePhoto.startsWith("data:image/")){
+attachments = [
+{name:"profile-photo",dataUrl:profilePhoto},
+attachments[0]
+];
+}
+
+/* Attachments are one-shot and optional. */
+luminaImageAttachments = [];
+
 const chat = document.getElementById("chat");
 
 if(!chat){
@@ -5354,15 +5658,19 @@ chat.style.display = "block";
 const messageDiv = document.createElement("div");
 messageDiv.className = "message bot";
 
+const modeText = attachments.length
+? (attachments.length === 1 ? "Using your attached image..." : "Using your attached images...")
+: "Creating from your prompt...";
+
 messageDiv.innerHTML = `
 <div class="message-actions">
 <button class="msg-action-btn" onclick="togglePinMessage(this)" title="Bookmark/Pin Message"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-pin'></use></svg> Pin</button>
 <button class="msg-action-btn" onclick="copyMessageText(this)" title="Copy text"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-copy'></use></svg> Copy</button>
 </div>
 <div class="msg-text-content">
-<div style="font-size:15px;font-weight:600;margin-bottom:10px;"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-image'></use></svg> Generating image...</div>
+<div style="font-size:15px;font-weight:600;margin-bottom:10px;"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-image'></use></svg> Creating image...</div>
 <div style="opacity:.7;font-size:13px;margin-bottom:12px;">${escapeHtml(promptText)}</div>
-<div class="lumina-image-loader"><div class="lumina-image-spinner"></div><span>Lumina is creating your image...</span></div>
+<div class="lumina-image-loader"><div class="lumina-image-spinner"></div><span>Lumina is ${escapeHtml(modeText.toLowerCase())}</span></div>
 </div>`;
 
 chat.appendChild(messageDiv);
@@ -5370,11 +5678,69 @@ smoothAutoScroll();
 
 try{
 
-if(typeof puter === "undefined" || !puter.ai || typeof puter.ai.txt2img !== "function"){
+if(typeof puter === "undefined" || !puter.ai){
 throw new Error("Puter.js image generation is unavailable.");
 }
 
-const imageElement = await puter.ai.txt2img(promptText);
+let imageElement;
+
+if(attachments.length === 0){
+
+/* Existing normal image generation: no attachment required. */
+if(typeof puter.ai.txt2img !== "function"){
+throw new Error("Puter.js text-to-image generation is unavailable.");
+}
+
+imageElement = await puter.ai.txt2img(promptText);
+
+}
+else{
+
+/*
+If the user attached an image, use the SAME image option for editing.
+With two images, the first is treated as the person/source reference
+and the second as the place/scene reference.
+*/
+if(typeof puter.ai.img2img !== "function"){
+throw new Error("This Puter.js version does not provide image-to-image editing.");
+}
+
+const referenceImage = await makeLuminaReferenceBoard(attachments);
+
+let editPrompt = promptText;
+
+if(attachments.length === 2){
+editPrompt = `
+Use the two attached reference images to complete the user's request.
+The FIRST image is the person/source reference.
+The SECOND image is the place/scene reference.
+If the user says "add me", place the person from the first image naturally into the second image.
+Preserve the person's recognizable identity and important appearance.
+Match perspective, scale, lighting, shadows, color temperature and camera style.
+Remove all reference labels and do not output a collage or split-screen.
+Output only the finished image.
+
+USER REQUEST:
+${promptText}
+`;
+}
+else{
+editPrompt = `
+Edit the attached image according to the user's request.
+Preserve important details unless the user asks to change them.
+Output only the finished image.
+
+USER REQUEST:
+${promptText}
+`;
+}
+
+imageElement = await puter.ai.img2img(
+editPrompt,
+referenceImage
+);
+
+}
 
 if(!imageElement){
 throw new Error("Puter did not return an image.");
@@ -5401,10 +5767,13 @@ link.download="lumina-ai-image.png";
 link.target="_blank";
 link.click();
 }
-}catch(error){console.error("Image save error:",error);}
+}catch(error){
+console.error("Image save error:",error);
+}
 };
 
 const content = messageDiv.querySelector(".msg-text-content");
+
 if(content){
 content.innerHTML = `
 <div style="font-size:15px;font-weight:600;margin-bottom:4px;"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-image'></use></svg> Generated Image</div>
@@ -5413,16 +5782,26 @@ content.appendChild(imageElement);
 content.appendChild(saveButton);
 }
 
-currentChat.push({type:"image",prompt:promptText,sender:"bot",timestamp:new Date().toISOString()});
+currentChat.push({
+type:"image",
+prompt:promptText,
+attachmentCount:attachments.length,
+sender:"bot",
+timestamp:new Date().toISOString()
+});
 save();
 smoothAutoScroll();
 
 }catch(error){
-console.error("Puter image generation error:",error);
+
+console.error("Puter image generation/edit error:",error);
+
 const content=messageDiv.querySelector(".msg-text-content");
+
 if(content){
 content.innerHTML=`<div style="font-weight:600;"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-warning'></use></svg> Image generation failed</div><div style="opacity:.75;font-size:13px;margin-top:6px;">${escapeHtml(error.message || "Please try again.")}</div>`;
 }
+
 }
 
 }
