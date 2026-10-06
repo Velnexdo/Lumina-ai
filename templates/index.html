@@ -1732,6 +1732,19 @@ font-size:14px;
 }
 
 
+
+.lumina-image-generating{
+padding:12px 14px;
+margin:8px 0;
+border-radius:14px;
+background:rgba(255,255,255,.045);
+border:1px solid rgba(255,255,255,.09);
+opacity:.82;
+}
+.lumina-image-generating span:first-child{
+color:var(--accent-color,#19c37d);
+}
+
 </style>
 </head>
 
@@ -5754,15 +5767,22 @@ generator can use to create the requested result.
     }
 }
 
+
+function luminaGetChatContainer(){
+    return document.getElementById("chatMessages")
+        || document.querySelector(".chat-messages")
+        || document.querySelector("[data-chat-messages]")
+        || document.querySelector("#messages")
+        || document.querySelector("main");
+}
+
 async function generateImage(providedPrompt=null, providedAttachments=null){
 
 const promptText = String(providedPrompt ?? "").trim();
 let attachments = []; // Image creation is prompt-only in the new UI.
 
 if(!promptText){
-/* Image generation now starts from the composer, so an empty prompt is invalid. */
-luminaImageAttachments = [];
-return;
+    return;
 }
 
 /*
@@ -5874,8 +5894,10 @@ imageElement = await (typeof puter.ai.img2img === "function"
 }
 
 if(!imageElement){
-throw new Error("Puter did not return an image.");
+    if(typeof statusMessage !== "undefined" && statusMessage) statusMessage.remove();
+    throw new Error("Puter did not return an image.");
 }
+if(typeof statusMessage !== "undefined" && statusMessage) statusMessage.remove();
 
 imageElement.style.maxWidth = "100%";
 imageElement.style.width = "100%";
