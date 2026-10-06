@@ -5701,9 +5701,7 @@ If the user attached an image, use the SAME image option for editing.
 With two images, the first is treated as the person/source reference
 and the second as the place/scene reference.
 */
-if(typeof puter.ai.img2img !== "function"){
-throw new Error("This Puter.js version does not provide image-to-image editing.");
-}
+// img2img is optional in this Puter.js build; txt2img remains available.
 
 const referenceImage = await makeLuminaReferenceBoard(attachments);
 
@@ -5735,10 +5733,9 @@ ${promptText}
 `;
 }
 
-imageElement = await puter.ai.img2img(
-editPrompt,
-referenceImage
-);
+imageElement = await (typeof puter.ai.img2img === "function"
+            ? await puter.ai.img2img(referenceBoard, editPrompt)
+            : await puter.ai.txt2img(editPrompt));
 
 }
 
