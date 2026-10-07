@@ -537,6 +537,72 @@ height:auto;
 box-shadow:0 8px 24px rgba(0,0,0,.3);
 }
 
+
+/* ============================================================
+   VIDEO RESULT CARD
+============================================================ */
+
+.lumina-video-card{
+max-width:800px;
+margin:12px auto;
+padding:14px;
+border-radius:16px;
+background:rgba(42,43,50,.96);
+border:1px solid rgba(25,195,125,.28);
+box-shadow:0 10px 30px rgba(0,0,0,.25);
+animation:messagePop .35s ease forwards;
+}
+
+body.light .lumina-video-card{
+background:#f4f4f4;
+border-color:rgba(25,195,125,.35);
+}
+
+.lumina-video-title{
+font-size:15px;
+font-weight:800;
+margin-bottom:10px;
+}
+
+.lumina-video-player{
+width:100%;
+max-height:560px;
+border-radius:12px;
+display:block;
+background:#000;
+}
+
+.lumina-video-actions{
+display:flex;
+gap:8px;
+flex-wrap:wrap;
+margin-top:12px;
+}
+
+.lumina-video-download{
+display:inline-flex;
+align-items:center;
+justify-content:center;
+padding:9px 14px;
+border-radius:9px;
+background:var(--accent-color,#19c37d);
+color:#fff;
+font-weight:700;
+text-decoration:none;
+font-size:13px;
+transition:transform .2s,box-shadow .2s;
+}
+
+.lumina-video-download:hover{
+transform:translateY(-2px);
+box-shadow:0 6px 18px rgba(25,195,125,.3);
+}
+
+.lumina-video-status{
+font-size:12px;
+opacity:.7;
+}
+
 .typing{
 display:none;
 max-width:800px;
@@ -4568,6 +4634,21 @@ speakRealtime(
 replyText
 );
 
+if(isVideoRequest(msg)){
+
+generateVideoForPrompt(msg).then(videoUrl=>{
+if(videoUrl){
+currentChat.push({
+text:"🎬 Video generated from: " + msg,
+sender:"bot",
+video:videoUrl
+});
+save();
+}
+});
+
+}
+
 })
 
 .catch(err=>{
@@ -5162,13 +5243,17 @@ document.getElementById(
 ).innerHTML =
 "";
 
-currentChat.forEach(
-m=>
-addMessage(
-m.text,
-m.sender
-)
-);
+currentChat.forEach(m=>{
+
+if(m.text){
+addMessage(m.text,m.sender);
+}
+
+if(m.video){
+addVideoCard(m.video,"Your video is ready!");
+}
+
+});
 
 updateWelcomeScreen();
 
@@ -5250,6 +5335,91 @@ clearInterval(
 thinkingInterval
 );
 
+}
+
+
+/* ============================================================
+   VIDEO GENERATION
+============================================================ */
+
+function isVideoRequest(text){
+
+const value = String(text || "").toLowerCase();
+
+return /\b(make|create|generate|render|produce)\b/.test(value)
+&& /\b(video|reel|short|movie)\b/.test(value);
+}
+
+
+function addVideoCard(videoUrl, title="Your video is ready!"){
+
+if(!videoUrl)
+return;
+
+let chat = document.getElementById("chat");
+
+let card = document.createElement("div");
+card.className = "lumina-video-card";
+
+let safeUrl = String(videoUrl).replace(/"/g,"&quot;");
+
+card.innerHTML = `
+<div class="lumina-video-title">🎬 ${title}</div>
+<video class="lumina-video-player" controls playsinline preload="metadata" src="${safeUrl}"></video>
+<div class="lumina-video-actions">
+<a class="lumina-video-download" href="${safeUrl}" download="lumina-video.mp4" target="_blank" rel="noopener">
+⬇ Download Video
+</a>
+</div>
+`;
+
+chat.appendChild(card);
+smoothAutoScroll();
+}
+
+
+function generateVideoForPrompt(prompt){
+
+let chat = document.getElementById("chat");
+
+let status = document.createElement("div");
+status.className = "lumina-video-card";
+status.innerHTML = `
+<div class="lumina-video-title">🎬 Creating your video...</div>
+<div class="lumina-video-status">JSON2Video is rendering it. This can take a little while.</div>
+`;
+chat.appendChild(status);
+smoothAutoScroll();
+
+return fetch(`${API_URL}/video`,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({prompt:prompt})
+})
+.then(res=>res.json().then(data=>({ok:res.ok,data:data})))
+.then(result=>{
+status.remove();
+
+if(!result.ok || !result.data.video){
+throw new Error(result.data.error || "Video generation failed.");
+}
+
+addVideoCard(result.data.video,"Your video is ready!");
+
+return result.data.video;
+})
+.catch(err=>{
+status.remove();
+let errorCard = document.createElement("div");
+errorCard.className = "lumina-video-card";
+errorCard.innerHTML = `
+<div class="lumina-video-title">⚠️ Video generation failed</div>
+<div class="lumina-video-status">${escapeHtml(err.message || "Please try again.")}</div>
+`;
+chat.appendChild(errorCard);
+smoothAutoScroll();
+return null;
+});
 }
 
 
@@ -5366,10 +5536,36 @@ document.getElementById(
 ).style.display =
 "none";
 
-handleBotReply(
+const replyText =
 data.reply ||
-"No response received from Render backend."
-);
+"No response received from Render backend.";
+
+handleBotReply(replyText);
+
+if(isVideoRequest(msg)){
+
+currentChat.push({
+text:"🎬 Video generated from: " + msg,
+sender:"bot",
+videoPending:true
+});
+
+save();
+
+setTimeout(()=>{
+generateVideoForPrompt(msg).then(videoUrl=>{
+if(videoUrl){
+currentChat[currentChat.length - 1] = {
+text:"🎬 Video generated from: " + msg,
+sender:"bot",
+video:videoUrl
+};
+save();
+}
+});
+},150);
+
+}
 
 },400);
 
