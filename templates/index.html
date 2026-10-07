@@ -1008,6 +1008,49 @@ letter-spacing:.3px;
 50%{box-shadow:0 0 0 2px rgba(25,195,125,.18),0 0 22px rgba(25,195,125,.48);}
 }
 
+/* Video generator button */
+.lumina-new-video-btn{
+position:relative;
+overflow:visible !important;
+border:1px solid #7c5cff !important;
+background:rgba(124,92,255,.12) !important;
+box-shadow:0 0 14px rgba(124,92,255,.25);
+}
+.lumina-new-video-btn:hover{
+background:rgba(124,92,255,.22) !important;
+box-shadow:0 0 22px rgba(124,92,255,.45);
+}
+.lumina-video-composer-textarea{
+width:100%;
+box-sizing:border-box;
+resize:vertical;
+min-height:130px;
+padding:14px;
+border-radius:14px;
+border:1px solid rgba(255,255,255,.12);
+background:rgba(255,255,255,.05);
+color:inherit;
+outline:none;
+font-family:inherit;
+font-size:14px;
+}
+body.light .lumina-video-composer-textarea{
+background:rgba(0,0,0,.04);
+border-color:rgba(0,0,0,.12);
+}
+.lumina-video-composer-generate{
+border:0;
+border-radius:11px;
+padding:10px 16px;
+background:#7c5cff;
+color:#fff;
+font-weight:800;
+cursor:pointer;
+}
+.lumina-video-composer-generate:hover{
+filter:brightness(1.08);
+}
+
 
 .accent-options{
 display:flex;
@@ -1965,6 +2008,10 @@ Ask Lumina anything with Lumina AI — coding, learning, creativity, questions a
 <button onclick="openRealtimeChat()" title="Real-time Voice Chat" style="background:linear-gradient(135deg,#6b11ff,#00d2ff);display:flex;align-items:center;justify-content:center;font-size:16px;"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-mic'></use></svg></button>
 
 <button class="lumina-new-image-btn" onclick="openImageAttachmentPicker()" title="New: Create Image"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-image'></use></svg></button>
+
+<button class="lumina-new-video-btn" onclick="openVideoPromptComposer()" title="Create Video">
+<span aria-hidden="true">▶</span>
+</button>
 
 <button onclick="openTemplateModal()" title="Prompt Templates"><svg class='li-icon ' aria-hidden='true' focusable='false'><use href='#icon-doc'></use></svg></button>
 
@@ -5342,6 +5389,98 @@ thinkingInterval
    VIDEO GENERATION
 ============================================================ */
 
+function openVideoPromptComposer(){
+
+    const existing = document.getElementById("luminaVideoPromptComposer");
+
+    if(existing){
+        existing.remove();
+    }
+
+    const overlay = document.createElement("div");
+    overlay.id = "luminaVideoPromptComposer";
+    overlay.style.cssText = `
+        position:fixed;
+        inset:0;
+        z-index:99999;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:20px;
+        background:rgba(0,0,0,.62);
+        backdrop-filter:blur(10px);
+    `;
+
+    const box = document.createElement("div");
+    box.style.cssText = `
+        width:min(620px,100%);
+        padding:22px;
+        border-radius:22px;
+        background:var(--background-secondary,#202123);
+        border:1px solid rgba(255,255,255,.12);
+        box-shadow:0 25px 80px rgba(0,0,0,.5);
+    `;
+
+    box.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;">
+            <div>
+                <div style="font-size:19px;font-weight:800;">🎬 Create Video</div>
+                <div style="margin-top:5px;font-size:12px;opacity:.65;">Describe the video you want Lumina to create.</div>
+            </div>
+            <button id="luminaVideoComposerClose" type="button" style="border:0;background:rgba(255,255,255,.07);color:inherit;border-radius:10px;width:36px;height:36px;font-size:20px;cursor:pointer;">×</button>
+        </div>
+
+        <textarea id="luminaVideoPrompt" class="lumina-video-composer-textarea" rows="5" maxlength="4000" placeholder="Example: A cinematic futuristic city at night with flying cars..."></textarea>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:10px;">
+            <span id="luminaVideoPromptCount" style="font-size:11px;opacity:.55;">0 / 4000</span>
+            <button id="luminaGenerateVideoButton" type="button" class="lumina-video-composer-generate">🎬 Generate Video</button>
+        </div>
+    `;
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    const prompt = document.getElementById("luminaVideoPrompt");
+    const count = document.getElementById("luminaVideoPromptCount");
+    const generateButton = document.getElementById("luminaGenerateVideoButton");
+    const closeButton = document.getElementById("luminaVideoComposerClose");
+
+    prompt.addEventListener("input",()=>{
+        count.textContent = `${prompt.value.length} / 4000`;
+    });
+
+    const close = ()=>overlay.remove();
+
+    closeButton.onclick = close;
+
+    overlay.addEventListener("click",event=>{
+        if(event.target === overlay){
+            close();
+        }
+    });
+
+    generateButton.onclick = ()=>{
+        const text = prompt.value.trim();
+
+        if(!text){
+            prompt.focus();
+            return;
+        }
+
+        close();
+        generateVideoForPrompt(text);
+    };
+
+    prompt.addEventListener("keydown",event=>{
+        if((event.ctrlKey || event.metaKey) && event.key === "Enter"){
+            generateButton.click();
+        }
+    });
+
+    setTimeout(()=>prompt.focus(),50);
+}
+
 function isVideoRequest(text){
 
 const value = String(text || "").toLowerCase();
@@ -5461,6 +5600,42 @@ input.value =
 "";
 
 handleInputTyping();
+
+/* ============================================================
+   DIRECT VIDEO GENERATION
+   Natural-language video requests are handled by JSON2Video
+   instead of being sent through the normal chat response.
+============================================================ */
+if(isVideoRequest(msg)){
+
+    document.getElementById(
+        "typing"
+    ).style.display = "none";
+
+    stopThinkingAnimation();
+
+    generateVideoForPrompt(msg);
+
+    return;
+}
+
+/* ============================================================
+   DIRECT IMAGE GENERATION
+   Natural-language image requests are handled by Lumina Image
+   instead of being sent through the normal chat response.
+============================================================ */
+if(isImageRequest(msg)){
+
+    document.getElementById(
+        "typing"
+    ).style.display = "none";
+
+    stopThinkingAnimation();
+
+    generateImage(msg);
+
+    return;
+}
 
 document.getElementById(
 "typing"
@@ -5588,6 +5763,48 @@ console.error(err);
 
 });
 
+}
+
+
+/* ============================================================
+   IMAGE REQUEST DETECTION
+============================================================ */
+
+function isImageRequest(text){
+
+    const value = String(text || "")
+        .toLowerCase()
+        .trim();
+
+    if(!value) return false;
+
+    const imageWords = [
+        "generate image",
+        "create image",
+        "make image",
+        "generate a image",
+        "generate an image",
+        "create a image",
+        "create an image",
+        "make a image",
+        "make an image",
+        "draw an image",
+        "draw a image",
+        "draw image",
+        "generate picture",
+        "create picture",
+        "make picture",
+        "generate photo",
+        "create photo",
+        "make photo",
+        "text to image",
+        "image of",
+        "picture of",
+        "photo of",
+        "draw "
+    ];
+
+    return imageWords.some(phrase => value.includes(phrase));
 }
 
 
@@ -6099,7 +6316,7 @@ Do not add unrelated subjects or change the requested concept.
 
     const saveButton = document.createElement("button");
     saveButton.className = "msg-action-btn";
-    saveButton.innerHTML = iconSvg("save") + " Save Image";
+    saveButton.innerHTML = iconSvg("save") + " Download Image";
     saveButton.style.marginTop = "10px";
 
     saveButton.onclick = function(){
