@@ -53,11 +53,11 @@ DOMAIN = "https://asklumina.in"
 # Do NOT upload this file to a public GitHub repository.
 # ==================================================
 
-CHAT_API_KEY = "ad"
+CHAT_API_KEY = os.environ.get("CHAT_API_KEY", "").strip()
 
-IMAGE_API_KEY = "adNROUTER_IMAGE_API_KEY"
+IMAGE_API_KEY = os.environ.get("IMAGE_API_KEY", "").strip()
 
-FISH_AUDIO_API_KEY = "sk-fish-yyxbk_qLi54wMcwo_R6kAl9d_jXOTFMIpBZEEhrGsCA"
+FISH_AUDIO_API_KEY = os.environ.get("FISH_AUDIO_API_KEY", "").strip()
 
 # JSON2VIDEO
 # Set this in your server environment. Never put it in frontend JavaScript.
@@ -598,8 +598,8 @@ def _extract_video_url(data):
 
 def generate_video(prompt):
     """Create a short text-based video with JSON2Video and return its public URL."""
-    if not JSON2VIDEO_API_KEY:
-        return None, "JSON2Video API key is not configured on the server."
+    if not JSON2VIDEO_API_KEY or JSON2VIDEO_API_KEY.startswith(("YOUR_", "PASTE_", "REPLACE_")):
+        return None, "JSON2Video API key is not configured on the server. Add JSON2VIDEO_API_KEY to your server environment."
 
     prompt = str(prompt).strip()
     if not prompt:
@@ -1192,7 +1192,12 @@ def config():
             ),
 
         "video_enabled":
-            bool(JSON2VIDEO_API_KEY),
+            bool(
+                JSON2VIDEO_API_KEY
+                and not JSON2VIDEO_API_KEY.startswith(
+                    ("YOUR_", "PASTE_", "REPLACE_")
+                )
+            ),
 
         "fish_model":
             FISH_MODEL_ID,
@@ -2071,6 +2076,14 @@ def health():
                 FISH_AUDIO_API_KEY
                 and not FISH_AUDIO_API_KEY.startswith(
                     "YOUR_"
+                )
+            ),
+
+        "video_configured":
+            bool(
+                JSON2VIDEO_API_KEY
+                and not JSON2VIDEO_API_KEY.startswith(
+                    ("YOUR_", "PASTE_", "REPLACE_")
                 )
             ),
 
