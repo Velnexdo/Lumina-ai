@@ -671,9 +671,13 @@ Each line must be suitable as on-screen text and under 140 characters."""
 
         # Rendering is asynchronous. Poll the project until the public URL exists.
         for _ in range(60):
+            # JSON2Video exposes the movies collection at /v2/movies.
+            # Query the collection for this project instead of using the
+            # unsupported /v2/movies/<project_id> path.
             response = session.get(
-                f"{JSON2VIDEO_BASE_URL}/movies/{project_id}",
+                f"{JSON2VIDEO_BASE_URL}/movies",
                 headers={"x-api-key": JSON2VIDEO_API_KEY},
+                params={"project": project_id},
                 timeout=20
             )
 
@@ -684,7 +688,7 @@ Each line must be suitable as on-screen text and under 140 characters."""
                 print("HTTP Status:", response.status_code)
                 print("Response:", response.text[:2000])
                 print("Project ID:", project_id)
-                print("Request URL:", f"{JSON2VIDEO_BASE_URL}/movies/{project_id}")
+                print("Request URL:", response.url)
                 print("=" * 60)
 
                 return None, (
@@ -696,6 +700,31 @@ Each line must be suitable as on-screen text and under 140 characters."""
                 status_data = response.json()
             except Exception:
                 return None, "JSON2Video returned an invalid render status."
+
+            # Some collection endpoints return a list instead of a single
+            # movie object. Select the matching project when possible.
+            if isinstance(status_data, list):
+                matching_movie = next(
+                    (
+                        item for item in status_data
+                        if isinstance(item, dict)
+                        and str(
+                            item.get("project")
+                            or item.get("project_id")
+                            or item.get("projectId")
+                            or item.get("id")
+                            or ""
+                        ) == str(project_id)
+                    ),
+                    None
+                )
+                if matching_movie is not None:
+                    status_data = matching_movie
+                elif len(status_data) == 1 and isinstance(status_data[0], dict):
+                    status_data = status_data[0]
+                else:
+                    print("[JSON2VIDEO STATUS RESPONSE]", str(status_data)[:1500])
+                    return None, "JSON2Video returned no matching project in its status response."
 
             video_url = _extract_video_url(status_data)
             if video_url:
