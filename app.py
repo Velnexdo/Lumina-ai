@@ -678,8 +678,19 @@ Each line must be suitable as on-screen text and under 140 characters."""
             )
 
             if response.status_code != 200:
-                print("[JSON2VIDEO STATUS ERROR]", response.status_code, response.text[:500])
-                return None, "Could not check JSON2Video render status."
+                # Log the real API response so the cause can be diagnosed from server logs.
+                print("=" * 60)
+                print("[JSON2VIDEO STATUS ERROR]")
+                print("HTTP Status:", response.status_code)
+                print("Response:", response.text[:2000])
+                print("Project ID:", project_id)
+                print("Request URL:", f"{JSON2VIDEO_BASE_URL}/movies/{project_id}")
+                print("=" * 60)
+
+                return None, (
+                    f"JSON2Video status check failed (HTTP {response.status_code}). "
+                    "Check server logs for the API response."
+                )
 
             try:
                 status_data = response.json()
