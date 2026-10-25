@@ -2676,7 +2676,8 @@ let currentMood = "neutral";
 let thinkingInterval = null;
 let isAutoScrollEnabled = true;
 
-const API_URL = "https://asklumina.in";
+// Flask API is hosted on Render; asklumina.in is the public frontend domain.
+const API_URL = "https://lumina-7vwo.onrender.com";
 
 let chats = JSON.parse(localStorage.getItem("chats") || "[]");
 
@@ -5894,124 +5895,265 @@ return String(value)
 let luminaImageAttachments = [];
 
 function openImageAttachmentPicker(){
+    const existing = document.getElementById("luminaImagePromptComposer");
+    if(existing) existing.remove();
 
-const existing = document.getElementById("luminaImagePromptComposer");
-if(existing){
-    existing.remove();
-}
+    const overlay = document.createElement("div");
+    overlay.id = "luminaImagePromptComposer";
+    overlay.style.cssText = `
+        position:fixed;inset:0;z-index:99999;display:flex;align-items:center;
+        justify-content:center;padding:18px;background:rgba(3,7,18,.76);
+        backdrop-filter:blur(16px);overflow-y:auto;overscroll-behavior:contain;
+        padding-top:max(12px,env(safe-area-inset-top));
+        padding-bottom:max(12px,env(safe-area-inset-bottom));
+    `;
 
-const overlay = document.createElement("div");
-overlay.id = "luminaImagePromptComposer";
-overlay.style.cssText = `
-position:fixed;
-inset:0;
-z-index:99999;
-display:flex;
-align-items:center;
-justify-content:center;
-padding:20px;
-background:rgba(0,0,0,.58);
-backdrop-filter:blur(10px);
-`;
+    const box = document.createElement("div");
+    box.style.cssText = `
+        width:min(780px,100%);max-height:calc(100vh - 36px);max-height:calc(100dvh - 36px);overflow-y:auto;
+        -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+        border:1px solid rgba(255,255,255,.14);border-radius:26px;padding:clamp(16px,3vw,28px);
+        background:radial-gradient(ellipse at 8% 0%,rgba(99,102,241,.14),transparent 38%),linear-gradient(145deg,rgba(28,31,48,.99),rgba(12,15,28,.99));
+        color:#f8fafc;box-shadow:0 28px 100px rgba(0,0,0,.55);
+    `;
 
-const box = document.createElement("div");
-box.style.cssText = `
-width:min(620px,100%);
-border:1px solid rgba(255,255,255,.12);
-border-radius:22px;
-padding:22px;
-background:var(--background-secondary,#202123);
-box-shadow:0 24px 80px rgba(0,0,0,.45);
-`;
-
-box.innerHTML = `
-<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;">
-    <div>
-        <div style="display:flex;align-items:center;gap:9px;font-size:18px;font-weight:800;">
-            <span style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:var(--accent-color,#19c37d);color:#fff;">
-                ✨
-            </span>
-            Create Image
-            <span class="lumina-image-new-badge">NEW</span>
+    box.innerHTML = `
+      <style>
+        #luminaImagePromptComposer *{box-sizing:border-box}
+        .li-studio-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:20px}
+        .li-studio-title{display:flex;align-items:center;gap:11px;font-size:clamp(19px,3vw,25px);font-weight:850;letter-spacing:-.5px}
+        .li-studio-mark{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:15px;background:linear-gradient(135deg,#8b5cf6,#06b6d4);font-size:22px;box-shadow:0 8px 24px rgba(99,102,241,.3)}
+        .li-studio-subtitle{color:#aab2c7;font-size:13px;line-height:1.55;margin-top:7px;max-width:540px}
+        .li-mode-pill{display:inline-flex;align-items:center;gap:8px;margin:13px 0 16px;padding:8px 11px;border:1px solid rgba(129,140,248,.24);border-radius:999px;background:rgba(99,102,241,.10);color:#c7d2fe;font-size:12px;font-weight:800;max-width:100%;line-height:1.35}
+        .li-mode-dot{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#a5b4fc;box-shadow:0 0 12px rgba(165,180,252,.7)}
+        .li-studio-close{flex:0 0 38px;height:38px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.06);color:white;font-size:23px;cursor:pointer}
+        .li-studio-close:hover{background:rgba(255,255,255,.13)}
+        .li-upload-zone{position:relative;display:block;border:1.5px dashed rgba(129,140,248,.62);border-radius:22px;padding:25px 16px;text-align:center;background:radial-gradient(ellipse at top,rgba(99,102,241,.17),rgba(255,255,255,.025));transition:border-color .2s ease,background .2s ease,transform .2s ease;cursor:pointer;touch-action:manipulation;overflow:hidden}
+        .li-upload-zone:before{content:"";position:absolute;inset:7px;border:1px solid rgba(255,255,255,.035);border-radius:15px;pointer-events:none}
+        .li-upload-zone:hover,.li-upload-zone.is-dragover{border-color:#67e8f9;background:rgba(34,211,238,.09);transform:translateY(-1px)}
+        .li-upload-icon{width:54px;height:54px;margin:0 auto 10px;display:grid;place-items:center;border-radius:18px;background:rgba(129,140,248,.17);font-size:25px}
+        .li-upload-title{font-size:15px;font-weight:800}
+        .li-upload-hint{font-size:12px;color:#aab2c7;margin-top:6px;line-height:1.5}
+        .li-choose-files{display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;min-height:44px;padding:11px 18px;border-radius:13px;border:1px solid rgba(255,255,255,.16);background:linear-gradient(135deg,#6366f1,#8b5cf6 62%,#0891b2);color:white;font-size:13px;font-weight:850;cursor:pointer;box-shadow:0 8px 24px rgba(99,102,241,.26);touch-action:manipulation}
+        .li-choose-files:hover{filter:brightness(1.12)}
+        .li-file-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 2px 8px;color:#cbd5e1;font-size:12px}
+        .li-file-count{padding:5px 9px;border-radius:999px;background:rgba(129,140,248,.15);color:#c4b5fd;font-weight:800;white-space:nowrap}
+        .li-preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
+        .li-preview-card{box-shadow:0 7px 20px rgba(0,0,0,.12)}
+        .li-preview-card{position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.045);min-width:0}
+        .li-preview-card img{display:block;width:100%;height:94px;object-fit:cover;background:#0b1020}
+        .li-preview-name{padding:7px 8px;font-size:11px;color:#dbe3f3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .li-preview-size{padding:0 8px 8px;font-size:10px;color:#8490a8}
+        .li-remove-file{position:absolute;top:6px;right:6px;width:25px;height:25px;border:1px solid rgba(255,255,255,.25);border-radius:8px;background:rgba(5,8,20,.82);color:#fff;font-size:17px;line-height:1;cursor:pointer}
+        .li-remove-file:hover{background:#dc2626}
+        .li-field-label{display:block;color:#e2e8f0;font-size:13px;font-weight:750;margin:18px 0 8px}
+        .li-prompt-box{width:100%;resize:vertical;min-height:112px;padding:14px 15px;border:1px solid rgba(148,163,184,.23);border-radius:15px;background:rgba(3,7,18,.55);color:#f8fafc;font:inherit;font-size:14px;line-height:1.6;outline:none;max-width:100%;}
+        .li-prompt-box:focus{border-color:#818cf8;box-shadow:0 0 0 3px rgba(129,140,248,.14)}
+        .li-prompt-box::placeholder{color:#78839b}
+        .li-strength-panel{margin-top:15px;padding:13px 14px;border:1px solid rgba(255,255,255,.08);border-radius:15px;background:rgba(255,255,255,.035)}
+        .li-strength-top{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:#dbe3f3;margin-bottom:9px}
+        .li-strength-value{color:#a5b4fc;font-weight:850;font-variant-numeric:tabular-nums}
+        .li-strength-range{width:100%;accent-color:#818cf8;cursor:pointer}
+        .li-strength-note{font-size:11px;line-height:1.5;color:#8e9ab2;margin-top:6px}
+        .li-studio-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:17px;flex-wrap:wrap}
+        .li-prompt-count{font-size:11px;color:#8792aa}
+        .li-generate-btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:12px 18px;border:0;border-radius:13px;background:linear-gradient(100deg,#6366f1,#8b5cf6 55%,#06b6d4);color:white;font-size:13px;font-weight:850;cursor:pointer;box-shadow:0 10px 26px rgba(99,102,241,.25);transition:transform .18s ease,filter .18s ease}
+        .li-generate-btn:hover{transform:translateY(-1px);filter:brightness(1.08)}
+        .li-generate-btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+        .li-studio-note{display:flex;gap:8px;align-items:flex-start;margin-top:14px;color:#8d9ab4;font-size:11px;line-height:1.5}
+        @media(max-width:640px){
+          #luminaImagePromptComposer{align-items:flex-end!important;padding:0!important;padding-bottom:env(safe-area-inset-bottom)!important}
+          #luminaImagePromptComposer > div{width:100%!important;max-width:none!important;max-height:94vh!important;max-height:94dvh!important;border-radius:24px 24px 0 0!important;padding:18px 15px calc(16px + env(safe-area-inset-bottom))!important;border-bottom:0!important}
+          .li-studio-head{gap:10px;margin-bottom:14px}.li-studio-mark{width:39px;height:39px;border-radius:13px;font-size:20px}.li-studio-title{font-size:19px;gap:8px}.li-studio-subtitle{font-size:12px}
+          .li-mode-pill{margin:10px 0 12px;font-size:11px}
+          .li-upload-zone{padding:20px 11px;border-radius:18px}.li-upload-icon{width:47px;height:47px;border-radius:15px}.li-upload-hint{font-size:11px}
+          .li-preview-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.li-preview-card img{height:78px}.li-preview-name{font-size:10px;padding:6px}.li-preview-size{font-size:9px;padding:0 6px 7px}.li-remove-file{width:29px;height:29px}
+          .li-studio-footer{align-items:stretch;gap:10px}.li-generate-btn{width:100%;min-height:47px;font-size:14px}.li-prompt-count{text-align:right}
+          .li-prompt-box{font-size:16px;min-height:100px;resize:vertical}.li-field-label{margin-top:15px}
+        }
+        @media(max-width:380px){.li-preview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.li-preview-card img{height:95px}.li-studio-title{font-size:17px}.li-studio-head .li-studio-subtitle{max-width:235px}.li-file-summary{font-size:11px}}
+        @media(min-width:641px) and (max-height:700px){#luminaImagePromptComposer > div{max-height:calc(100dvh - 20px)!important}}
+      </style>
+      <div class="li-studio-head">
+        <div>
+          <div class="li-studio-title"><span class="li-studio-mark">✦</span><span>Lumina Image Studio <span style="font-size:10px;vertical-align:middle;padding:4px 7px;border-radius:999px;background:rgba(34,211,238,.12);color:#67e8f9;letter-spacing:.6px">AI TOOLS</span></span></div>
+          <div class="li-studio-subtitle">Create something new from a prompt, or link your photos to transform them. Your images stay previewable before you start.</div>
         </div>
-        <div style="font-size:12px;opacity:.62;margin-top:5px;">
-            Describe anything you want Lumina to create.
-        </div>
-    </div>
-    <button id="luminaImageComposerClose" type="button"
-        style="border:0;background:rgba(255,255,255,.07);color:inherit;border-radius:10px;width:34px;height:34px;font-size:18px;cursor:pointer;">
-        ×
-    </button>
-</div>
+        <button id="luminaImageComposerClose" class="li-studio-close" type="button" aria-label="Close">×</button>
+      </div>
 
-<div class="lumina-image-prompt-shell">
-    <textarea id="luminaImagePrompt"
-        placeholder="Describe the image you want..."
-        rows="5"
-        maxlength="4000"></textarea>
-    <div class="lumina-image-prompt-footer">
-        <span id="luminaImagePromptCount">0 / 4000</span>
-        <button id="luminaGenerateImageButton" type="button">
-            <span>✨</span> Create
-        </button>
-    </div>
-</div>
+      <div class="li-mode-pill" id="luminaImageMode" aria-live="polite"><span class="li-mode-dot"></span><span id="luminaImageModeText">✨ Text-to-image · No image linked</span></div>
+      <label class="li-upload-zone" id="luminaUploadZone" for="luminaImageSource">
+        <div class="li-upload-icon">⇧</div>
+        <div class="li-upload-title" id="luminaUploadTitle">Link images to edit them</div>
+        <div class="li-upload-hint" id="luminaUploadHint">Tap to browse on mobile, or drop files here on desktop · PNG, JPG or WebP</div>
+        <span class="li-choose-files">＋ Select images</span>
+        <input id="luminaImageSource" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
+      </label>
 
-<div class="lumina-image-enhance-note">
-    <span>✦</span>
-    <span>Lumina will enhance your prompt to create a more detailed image.</span>
-</div>
-`;
+      <div id="luminaFileSummary" class="li-file-summary" style="display:none">
+        <span>Selected images</span><span id="luminaFileCount" class="li-file-count">0 / 10</span>
+      </div>
+      <div id="luminaImageSourcePreview" class="li-preview-grid" style="margin-top:10px"></div>
 
-overlay.appendChild(box);
-document.body.appendChild(overlay);
+      <div id="luminaEditStrengthWrap" class="li-strength-panel" style="display:none">
+        <div class="li-strength-top"><label for="luminaEditStrength">Editing strength</label><span id="luminaEditStrengthValue" class="li-strength-value">0.65</span></div>
+        <input id="luminaEditStrength" class="li-strength-range" type="range" min="0.1" max="1" step="0.05" value="0.65">
+        <div class="li-strength-note">Lower values preserve more of the original image. Higher values allow a more noticeable transformation.</div>
+      </div>
 
-const promptInput = document.getElementById("luminaImagePrompt");
-const count = document.getElementById("luminaImagePromptCount");
-const generateButton = document.getElementById("luminaGenerateImageButton");
-const closeButton = document.getElementById("luminaImageComposerClose");
+      <label class="li-field-label" for="luminaImagePrompt">What should Lumina create or change?</label>
+      <textarea id="luminaImagePrompt" class="li-prompt-box" placeholder="Example: Give this photo a cinematic golden-hour look, soft lighting, and a clean professional finish..." rows="4" maxlength="4000"></textarea>
+      <div class="li-studio-footer">
+        <span id="luminaImagePromptCount" class="li-prompt-count">0 / 4000</span>
+        <button id="luminaGenerateImageButton" class="li-generate-btn" type="button"><span>✦</span> Create Image</button>
+      </div>
+      <div class="li-studio-note"><span>✧</span><span>No upload? Lumina will create a new image. With uploaded files, the same edit prompt is applied to each image one by one.</span></div>
+    `;
 
-const updateCount = ()=>{
-    count.textContent = `${promptInput.value.length} / 4000`;
-};
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    const previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
 
-promptInput.addEventListener("input",updateCount);
+    const promptInput = document.getElementById("luminaImagePrompt");
+    const count = document.getElementById("luminaImagePromptCount");
+    const generateButton = document.getElementById("luminaGenerateImageButton");
+    const closeButton = document.getElementById("luminaImageComposerClose");
+    const sourceInput = document.getElementById("luminaImageSource");
+    const sourcePreview = document.getElementById("luminaImageSourcePreview");
+    const sourceSummary = document.getElementById("luminaFileSummary");
+    const fileCount = document.getElementById("luminaFileCount");
+    const strengthWrap = document.getElementById("luminaEditStrengthWrap");
+    const strengthInput = document.getElementById("luminaEditStrength");
+    const strengthValue = document.getElementById("luminaEditStrengthValue");
+    const uploadZone = document.getElementById("luminaUploadZone");
+    const modeText = document.getElementById("luminaImageModeText");
+    const uploadTitle = document.getElementById("luminaUploadTitle");
+    const uploadHint = document.getElementById("luminaUploadHint");
+    let selectedFiles = [];
+    let previewUrls = [];
 
-const close = ()=>{
-    overlay.remove();
-};
+    const revokePreviewUrls = () => {
+        previewUrls.forEach(url => URL.revokeObjectURL(url));
+        previewUrls = [];
+    };
 
-closeButton.onclick = close;
+    const renderSelectedFiles = () => {
+        revokePreviewUrls();
+        sourcePreview.innerHTML = "";
+        sourceSummary.style.display = selectedFiles.length ? "flex" : "none";
+        strengthWrap.style.display = selectedFiles.length ? "block" : "none";
+        fileCount.textContent = `${selectedFiles.length} / 10 selected`;
+        modeText.textContent = selectedFiles.length
+            ? `🪄 Image-to-image · ${selectedFiles.length} image${selectedFiles.length === 1 ? "" : "s"} linked`
+            : "✨ Text-to-image · No image linked";
+        uploadTitle.textContent = selectedFiles.length ? "Add more images or tap a preview to remove it" : "Link images to edit them";
+        uploadHint.textContent = selectedFiles.length
+            ? "PNG, JPG or WebP · Up to 10 images total · 4 MB max each"
+            : "Tap to browse on mobile, or drop files here on desktop · PNG, JPG or WebP · Up to 10 images";
+        generateButton.innerHTML = selectedFiles.length
+            ? `<span>✦</span> Edit ${selectedFiles.length} Image${selectedFiles.length === 1 ? "" : "s"}`
+            : "<span>✦</span> Create Image";
 
-overlay.addEventListener("click",event=>{
-    if(event.target === overlay){
+        selectedFiles.forEach((file, index) => {
+            const url = URL.createObjectURL(file);
+            previewUrls.push(url);
+            const card = document.createElement("div");
+            card.className = "li-preview-card";
+            card.innerHTML = `
+                <img src="${url}" alt="Preview ${index + 1}">
+                <button type="button" class="li-remove-file" aria-label="Remove ${escapeHtml(file.name)}" title="Remove image">×</button>
+                <div class="li-preview-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</div>
+                <div class="li-preview-size">${(file.size / (1024 * 1024)).toFixed(2)} MB</div>
+            `;
+            card.querySelector("button").addEventListener("click", () => {
+                selectedFiles.splice(index, 1);
+                renderSelectedFiles();
+            });
+            sourcePreview.appendChild(card);
+        });
+    };
+
+    const addFiles = (fileList) => {
+        const incoming = Array.from(fileList || []);
+        const validTypes = ["image/png", "image/jpeg", "image/webp"];
+        const errors = [];
+        incoming.forEach(file => {
+            if (!validTypes.includes(file.type)) {
+                errors.push(`${file.name}: unsupported format`);
+            } else if (file.size > 4 * 1024 * 1024) {
+                errors.push(`${file.name}: larger than 4 MB`);
+            } else if (selectedFiles.some(existing => existing.name === file.name && existing.size === file.size && existing.lastModified === file.lastModified)) {
+                // Ignore a duplicate selection.
+            } else if (selectedFiles.length >= 10) {
+                errors.push(`${file.name}: maximum 10 images`);
+            } else {
+                selectedFiles.push(file);
+            }
+        });
+        renderSelectedFiles();
+        if (errors.length) alert(errors.slice(0, 5).join("\n") + (errors.length > 5 ? `\n…and ${errors.length - 5} more.` : ""));
+    };
+
+    sourceInput.addEventListener("change", () => {
+        addFiles(sourceInput.files);
+        sourceInput.value = "";
+    });
+
+    ["dragenter", "dragover"].forEach(eventName => uploadZone.addEventListener(eventName, event => {
+        event.preventDefault();
+        uploadZone.classList.add("is-dragover");
+    }));
+    ["dragleave", "drop"].forEach(eventName => uploadZone.addEventListener(eventName, event => {
+        event.preventDefault();
+        uploadZone.classList.remove("is-dragover");
+    }));
+    uploadZone.addEventListener("drop", event => addFiles(event.dataTransfer.files));
+
+    strengthInput.addEventListener("input", () => {
+        strengthValue.textContent = Number(strengthInput.value).toFixed(2);
+    });
+    promptInput.addEventListener("input", () => {
+        count.textContent = `${promptInput.value.length} / 4000`;
+    });
+
+    const close = () => {
+        revokePreviewUrls();
+        document.body.style.overflow = previousBodyOverflow;
+        document.removeEventListener("keydown", onComposerKeydown);
+        overlay.remove();
+    };
+    const onComposerKeydown = event => { if (event.key === "Escape") close(); };
+    document.addEventListener("keydown", onComposerKeydown);
+    closeButton.onclick = close;
+    overlay.addEventListener("click", event => {
+        if (event.target === overlay) close();
+    });
+
+    generateButton.onclick = async () => {
+        const promptText = promptInput.value.trim();
+        if (!promptText) {
+            promptInput.focus();
+            promptInput.style.boxShadow = "0 0 0 3px rgba(129,140,248,.35)";
+            return;
+        }
+        const filesToEdit = selectedFiles.slice();
+        const strength = Number(strengthInput.value || 0.65);
         close();
-    }
-});
+        if (filesToEdit.length) {
+            for (let index = 0; index < filesToEdit.length; index++) {
+                await generateEditedImage(promptText, filesToEdit[index], strength, index + 1, filesToEdit.length);
+            }
+        } else {
+            generateImage(promptText);
+        }
+    };
 
-generateButton.onclick = ()=>{
-    const promptText = promptInput.value.trim();
-
-    if(!promptText){
-        promptInput.focus();
-        promptInput.style.boxShadow = "0 0 0 2px var(--accent-color,#19c37d)";
-        return;
-    }
-
-    close();
-    generateImage(promptText);
-};
-
-promptInput.addEventListener("keydown",event=>{
-    if((event.ctrlKey || event.metaKey) && event.key === "Enter"){
-        generateButton.click();
-    }
-});
-
-setTimeout(()=>{
-    promptInput.focus();
-},50);
-
+    promptInput.addEventListener("keydown", event => {
+        if ((event.ctrlKey || event.metaKey) && event.key === "Enter") generateButton.click();
+    });
+    setTimeout(() => promptInput.focus(), 50);
 }
 
 function handleImageAttachments(input){
@@ -6389,6 +6531,92 @@ Do not add unrelated subjects or change the requested concept.
 
 }
 
+}
+
+
+/* ============================================================
+   IMAGE-TO-IMAGE EDITING
+============================================================ */
+
+async function generateEditedImage(promptText, sourceFile, strength=0.65, batchIndex=1, batchTotal=1){
+    const chat = document.getElementById("chat");
+    if(!chat) return;
+
+    chat.style.display = "block";
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "message bot";
+    messageDiv.innerHTML = `
+        <div class="msg-text-content">
+            <div style="font-size:15px;font-weight:700;margin-bottom:8px;">✨ Editing image ${batchIndex} of ${batchTotal}...</div>
+            <div style="font-size:13px;opacity:.72;margin-bottom:10px;">${escapeHtml(promptText)}</div>
+            <div class="lumina-image-loader"><div class="lumina-image-spinner"></div><span>Sending image to Lumina Image Studio...</span></div>
+        </div>`;
+    chat.appendChild(messageDiv);
+    smoothAutoScroll();
+
+    try{
+        const formData = new FormData();
+        formData.append("image", sourceFile, sourceFile.name);
+        formData.append("prompt", promptText);
+        formData.append("strength", String(strength));
+
+        const response = await fetch(`${API_URL}/edit-image`, {
+            method:"POST",
+            body:formData
+        });
+
+        if(!response.ok){
+            let errorMessage = `Image editing failed (HTTP ${response.status}).`;
+            try{
+                const errorData = await response.json();
+                if(errorData && errorData.error) errorMessage = errorData.error;
+            }catch(_){}
+            throw new Error(errorMessage);
+        }
+
+        const blob = await response.blob();
+        if(!blob.size) throw new Error("The image service returned an empty image.");
+        const imageUrl = URL.createObjectURL(blob);
+        const content = messageDiv.querySelector(".msg-text-content");
+        content.innerHTML = `
+            <div style="font-size:15px;font-weight:700;margin-bottom:8px;">✨ Edited Image</div>
+            <div style="font-size:13px;opacity:.72;margin-bottom:10px;">${escapeHtml(promptText)}</div>
+            <img src="${imageUrl}" alt="Edited by Lumina AI" style="display:block;width:100%;height:auto;max-height:700px;object-fit:contain;border-radius:14px;margin-top:8px;box-shadow:0 8px 30px rgba(0,0,0,.28);">
+        `;
+
+        const downloadButton = document.createElement("button");
+        downloadButton.className = "msg-action-btn";
+        downloadButton.style.marginTop = "10px";
+        downloadButton.innerHTML = iconSvg("save") + " Download Edited Image";
+        downloadButton.onclick = ()=>{
+            const link = document.createElement("a");
+            link.href = imageUrl;
+            link.download = "lumina-edited-image.png";
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        };
+        content.appendChild(downloadButton);
+
+        currentChat.push({
+            type:"image-edit",
+            prompt:promptText,
+            sender:"bot",
+            timestamp:new Date().toISOString()
+        });
+        save();
+        smoothAutoScroll();
+    }catch(error){
+        console.error("Lumina image-to-image error:",error);
+        const content = messageDiv.querySelector(".msg-text-content");
+        if(content){
+            content.innerHTML = `
+                <div style="font-weight:700;">⚠️ Image editing unavailable</div>
+                <div style="font-size:13px;opacity:.78;margin-top:7px;">${escapeHtml(error?.message || "Please try again.")}</div>
+            `;
+        }
+        smoothAutoScroll();
+    }
 }
 
 
