@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template, Response, abort
 from flask_cors import CORS
 import os
+import base64
 import requests
 import json
 import random
@@ -18,6 +19,9 @@ app = Flask(
     template_folder="templates",
     static_folder="static"
 )
+
+# Limit uploads to protect the server. Image editing accepts files up to 4 MB.
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
 
 # ==================================================
 # SECURITY / CORS
@@ -56,6 +60,12 @@ DOMAIN = "https://asklumina.in"
 CHAT_API_KEY = os.environ.get("CHAT_API_KEY", "").strip()
 
 IMAGE_API_KEY = os.environ.get("IMAGE_API_KEY", "").strip()
+
+# Image-to-image editing provider configuration. Keep credentials in server environment variables.
+CLOUDFLARE_ACCOUNT_ID = os.environ.get("CLOUDFLARE_ACCOUNT_ID", "").strip()
+CLOUDFLARE_API_TOKEN = os.environ.get("CLOUDFLARE_API_TOKEN", "").strip()
+CLOUDFLARE_IMG2IMG_MODEL = "@cf/runwayml/stable-diffusion-v1-5-img2img"
+MAX_EDIT_IMAGE_BYTES = 4 * 1024 * 1024
 
 FISH_AUDIO_API_KEY = os.environ.get("FISH_AUDIO_API_KEY", "").strip()
 
@@ -1223,6 +1233,8 @@ def config():
                 )
             ),
 
+        "image_editing_enabled": bool(CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN),
+
         "tts_enabled":
             bool(
                 FISH_AUDIO_API_KEY
@@ -1476,6 +1488,133 @@ def video():
     except Exception as e:
         print("[VIDEO ROUTE ERROR]", str(e))
         return jsonify({"error": "Video generation failed."}), 500
+
+
+# ==================================================
+# IMAGE-TO-IMAGE EDITING
+# ==================================================
+
+def edit_image_with_cloudflare(image_bytes, mime_type, prompt, strength):
+    """Edit an uploaded image through Cloudflare Workers AI.
+
+    The Cloudflare account and API token are optional until the feature is
+    enabled. They must be configured as Render environment variables.
+    """
+    if not CLOUDFLARE_ACCOUNT_ID or not CLOUDFLARE_API_TOKEN:
+        return None, None, (
+            "Image editing is not configured yet. Add the required image-editing credentials in your server environment."
+        )
+
+    encoded_image = base64.b64encode(image_bytes).decode("ascii")
+    endpoint = (
+        "https://api.cloudflare.com/client/v4/accounts/"
+        f"{CLOUDFLARE_ACCOUNT_ID}/ai/run/{CLOUDFLARE_IMG2IMG_MODEL}"
+    )
+    payload = {
+        "prompt": prompt,
+        "image": encoded_image,
+        "strength": strength,
+        "num_steps": 20,
+        "guidance": 7.5,
+        "negative_prompt": "blurry, low quality, distorted, watermark, text artifacts"
+    }
+
+    try:
+        response = session.post(
+            endpoint,
+            headers={
+                "Authorization": f"Bearer {CLOUDFLARE_API_TOKEN}",
+                "Content-Type": "application/json"
+            },
+            json=payload,
+            timeout=120
+        )
+        print("[IMAGE EDITING]", response.status_code, response.headers.get("Content-Type", ""))
+
+        if not response.ok:
+            print("[IMAGE EDITING ERROR]", response.text[:1500])
+            return None, None, (
+                f"The image-editing service returned HTTP {response.status_code}. "
+                "Check the server logs and configured model access/usage."
+            )
+
+        content_type = response.headers.get("Content-Type", "").lower()
+        if content_type.startswith("image/") and response.content:
+            return response.content, content_type.split(";", 1)[0], None
+
+        # Some API responses wrap the generated image in JSON. Accept common
+        # response shapes so the route can handle either representation.
+        try:
+            result_data = response.json()
+        except ValueError:
+            print("[IMAGE EDITING INVALID RESPONSE]", response.text[:1000])
+            return None, None, "The image service returned an unsupported response."
+
+        result = result_data.get("result", result_data) if isinstance(result_data, dict) else {}
+        image_value = result.get("image") if isinstance(result, dict) else None
+        if isinstance(image_value, str) and image_value:
+            if image_value.startswith("data:") and "," in image_value:
+                image_value = image_value.split(",", 1)[1]
+            try:
+                return base64.b64decode(image_value), "image/png", None
+            except Exception:
+                pass
+
+        print("[IMAGE EDITING UNKNOWN RESPONSE]", str(result_data)[:1000])
+        return None, None, "The image service did not return an edited image."
+
+    except requests.Timeout:
+        return None, None, "Image editing timed out. Please try again."
+    except requests.RequestException as exc:
+        print("[IMAGE EDITING REQUEST ERROR]", str(exc))
+        return None, None, "Could not connect to the image-editing service."
+    except Exception as exc:
+        print("[IMAGE EDITING ERROR]", str(exc))
+        return None, None, "Image editing failed unexpectedly."
+
+
+@app.route("/edit-image", methods=["POST"])
+def edit_image_route():
+    """Receive an image upload and return the edited image as a PNG/JPEG."""
+    upload = request.files.get("image")
+    prompt = request.form.get("prompt", "").strip()
+    strength_raw = request.form.get("strength", "0.65")
+
+    if upload is None:
+        return jsonify({"error": "Choose an image to edit."}), 400
+    if not prompt:
+        return jsonify({"error": "Enter an editing prompt."}), 400
+    if len(prompt) > MAX_IMAGE_PROMPT_LENGTH:
+        return jsonify({"error": f"Prompt must be {MAX_IMAGE_PROMPT_LENGTH:,} characters or fewer."}), 413
+
+    mime_type = (upload.mimetype or "").lower()
+    if mime_type not in {"image/png", "image/jpeg", "image/webp"}:
+        return jsonify({"error": "Please upload a PNG, JPG, or WebP image."}), 415
+
+    image_bytes = upload.read(MAX_EDIT_IMAGE_BYTES + 1)
+    if not image_bytes:
+        return jsonify({"error": "The uploaded image is empty."}), 400
+    if len(image_bytes) > MAX_EDIT_IMAGE_BYTES:
+        return jsonify({"error": "Image must be 4 MB or smaller."}), 413
+
+    try:
+        strength = float(strength_raw)
+    except (TypeError, ValueError):
+        return jsonify({"error": "Strength must be a number between 0.1 and 1.0."}), 400
+    strength = max(0.1, min(1.0, strength))
+
+    image_bytes_out, output_type, error = edit_image_with_cloudflare(
+        image_bytes, mime_type, prompt, strength
+    )
+    if error:
+        status = 503 if "not configured" in error.lower() else 502
+        return jsonify({"error": error}), status
+
+    return Response(
+        image_bytes_out,
+        mimetype=output_type or "image/png",
+        headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"}
+    )
 
 
 # ==================================================
@@ -2110,6 +2249,8 @@ def health():
                     "YOUR_"
                 )
             ),
+
+        "image_editing_configured": bool(CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN),
 
         "tts_configured":
             bool(
