@@ -64,7 +64,10 @@ IMAGE_API_KEY = os.environ.get("IMAGE_API_KEY", "").strip()
 # Image-to-image editing provider configuration. Keep credentials in server environment variables.
 CLOUDFLARE_ACCOUNT_ID = os.environ.get("CLOUDFLARE_ACCOUNT_ID", "").strip()
 CLOUDFLARE_API_TOKEN = os.environ.get("CLOUDFLARE_API_TOKEN", "").strip()
-CLOUDFLARE_IMG2IMG_MODEL = "@cf/runwayml/stable-diffusion-v1-5-inpainting"
+CLOUDFLARE_IMG2IMG_MODEL = os.environ.get(
+    "CLOUDFLARE_IMG2IMG_MODEL",
+    "@cf/runwayml/stable-diffusion-v1-5-img2img"
+).strip()
 MAX_EDIT_IMAGE_BYTES = 4 * 1024 * 1024
 
 FISH_AUDIO_API_KEY = os.environ.get("FISH_AUDIO_API_KEY", "").strip()
@@ -1505,14 +1508,14 @@ def edit_image_with_cloudflare(image_bytes, mime_type, prompt, strength):
             "Image editing is not configured yet. Add the required image-editing credentials in your server environment."
         )
 
-    encoded_image = base64.b64encode(image_bytes).decode("ascii")
     endpoint = (
         "https://api.cloudflare.com/client/v4/accounts/"
         f"{CLOUDFLARE_ACCOUNT_ID}/ai/run/{CLOUDFLARE_IMG2IMG_MODEL}"
     )
     payload = {
         "prompt": prompt,
-        "image": encoded_image,
+        # Workers AI img2img expects the image bytes as an integer array.
+        "image": list(image_bytes),
         "strength": strength,
         "num_steps": 20,
         "guidance": 7.5,
@@ -1532,11 +1535,32 @@ def edit_image_with_cloudflare(image_bytes, mime_type, prompt, strength):
         print("[IMAGE EDITING]", response.status_code, response.headers.get("Content-Type", ""))
 
         if not response.ok:
-            print("[IMAGE EDITING ERROR]", response.text[:1500])
-            return None, None, (
-                f"The image-editing service returned HTTP {response.status_code}. "
-                "Check the server logs and configured model access/usage."
-            )
+            print("[IMAGE EDITING ERROR]", response.text[:3000])
+            # Return a useful, non-secret error while keeping the detailed
+            # provider response in Render logs for diagnosis.
+            try:
+                provider_error = response.json()
+            except ValueError:
+                provider_error = {}
+            errors = provider_error.get("errors", []) if isinstance(provider_error, dict) else []
+            provider_message = ""
+            if errors and isinstance(errors[0], dict):
+                provider_message = str(errors[0].get("message", ""))
+            if response.status_code == 403:
+                message = (
+                    "Cloudflare denied access to the configured image-editing model. "
+                    "Check model availability/access and the API token permissions."
+                )
+            elif response.status_code == 400:
+                message = (
+                    "Cloudflare rejected the image-editing request. Check the model ID "
+                    "and request fields in the Render logs."
+                )
+            else:
+                message = f"The image-editing service returned HTTP {response.status_code}. Check Render logs."
+            if provider_message:
+                message += f" Provider: {provider_message[:300]}"
+            return None, None, message
 
         content_type = response.headers.get("Content-Type", "").lower()
         if content_type.startswith("image/") and response.content:
