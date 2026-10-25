@@ -64,7 +64,7 @@ IMAGE_API_KEY = os.environ.get("IMAGE_API_KEY", "").strip()
 # Image-to-image editing provider configuration. Keep credentials in server environment variables.
 CLOUDFLARE_ACCOUNT_ID = os.environ.get("CLOUDFLARE_ACCOUNT_ID", "").strip()
 CLOUDFLARE_API_TOKEN = os.environ.get("CLOUDFLARE_API_TOKEN", "").strip()
-CLOUDFLARE_IMG2IMG_MODEL = "@cf/runwayml/stable-diffusion-v1-5-img2img"
+CLOUDFLARE_IMG2IMG_MODEL = "@cf/runwayml/stable-diffusion-v1-5-inpainting"
 MAX_EDIT_IMAGE_BYTES = 4 * 1024 * 1024
 
 FISH_AUDIO_API_KEY = os.environ.get("FISH_AUDIO_API_KEY", "").strip()
