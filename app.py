@@ -1,12 +1,3 @@
-"""
-LuminaAI Ultra — Flask backend
-Existing chat, training responses, OpenRouter image generation, Hugging Face
-image-to-image editing, JSON2Video, Fish Audio TTS, sharing, and status routes.
-
-Configure secrets as environment variables on your hosting provider.
-Never commit API tokens to a public repository.
-"""
-
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from PIL import Image, UnidentifiedImageError
